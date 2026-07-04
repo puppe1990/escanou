@@ -24,9 +24,16 @@ type SupermarketPageData struct {
 	Scans   []PriceScanView
 	Markets []MarketView
 
-	Badges          []BadgeView
-	Leaders         []LeaderView
-	LookupProduct   *ProductView
+	Badges              []BadgeView
+	Leaders             []LeaderView
+	LevelXP             int
+	LevelXPMax          int
+	LevelProgressPct    int
+	UnlockedBadgeCount  int
+	TotalBadgeCount     int
+	UserDisplayName     string
+	UserCity            string
+	LookupProduct       *ProductView
 	LookupError     string
 	LookupBarcode   string
 	LookupNeedsName bool
@@ -175,8 +182,36 @@ func (h *SupermarketHandler) Achievements(w http.ResponseWriter, r *http.Request
 	if uid > 0 {
 		reports, _ := h.store.ListUserReports(uid, 1000)
 		data.SubmissionCount = len(reports)
+		if level, points, rank, err := h.store.LoadStats(uid); err == nil {
+			data.UserLevel = level
+			data.UserPoints = points
+			data.UserRank = rank
+			data.LevelXP, data.LevelXPMax, data.LevelProgressPct = levelProgress(points)
+		}
+		if p, err := h.store.GetOrCreateProfile(uid); err == nil {
+			data.UserDisplayName = p.DisplayName
+			if data.UserDisplayName == "" {
+				data.UserDisplayName = "Colaborador"
+			}
+			data.UserCity = p.City
+		}
+	}
+	for _, b := range data.Badges {
+		data.TotalBadgeCount++
+		if b.Unlocked {
+			data.UnlockedBadgeCount++
+		}
 	}
 	httpx.RenderOrError(w, h.renderer, "base", "achievements", data, h.cfg)
+}
+
+const pointsPerLevel = 100
+
+func levelProgress(points int) (xp, max, pct int) {
+	max = pointsPerLevel
+	xp = points % max
+	pct = xp
+	return xp, max, pct
 }
 
 func (h *SupermarketHandler) NFCe(w http.ResponseWriter, r *http.Request) {

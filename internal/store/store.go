@@ -31,6 +31,7 @@ type Store interface {
 	ResetPasswordWithToken(token, passwordHash string) error
 	Sessions() session.Store
 	LoadStats(userID int64) (level, points, rank int, err error)
+	GetOrCreateProfile(userID int64) (models.UserProfile, error)
 	ListProducts(limit int) ([]models.Product, error)
 	FindProductByBarcode(barcode string) (models.Product, bool, error)
 	CreateProduct(name, barcode, category string) (int64, error)
