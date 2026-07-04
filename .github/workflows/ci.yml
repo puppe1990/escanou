@@ -58,3 +58,9 @@ jobs:
 
       - name: npm test
         run: npm test
+
+      - name: Build CSS
+        run: npx tailwindcss -i input.css -o web/static/css/styles.css --minify
+
+      - name: Verify bottom nav styles
+        run: grep -q mercado-bottom-nav web/static/css/styles.css
