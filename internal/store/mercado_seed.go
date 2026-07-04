@@ -38,13 +38,20 @@ func seedMercadoCatalog(db *sql.DB) error {
 	}{
 		{"Pão de Açúcar Paulista", "Av. Paulista, 2064", -23.5615, -46.6590},
 		{"Extra Penha", "Av. Penha de França, 569", -23.5420, -46.5450},
-		{"Carrefour Tatuapé", "R. Serra de Bragança, 629", -23.5405, -46.5755},
+		{"Carrefour Tatuapé", "R. Serra de Bragança, 629 — Tatuapé", -23.5405, -46.5755},
 		{"Assaí São Miguel", "Av. Nordestina, 4944", -23.4945, -46.4440},
+		{"Extra Belenzinho", "R. Oriente, 234 — Belenzinho", -23.5398, -46.5865},
+		{"Assaí Belém", "Av. Alcântara Machado, 664 — Belém", -23.5368, -46.5832},
+		{"Dia Belenzinho", "R. José Belenzinho, 289 — Belenzinho", -23.5442, -46.5948},
+		{"Extra Tatuapé", "R. Serra de Bragança, 1555 — Tatuapé", -23.5492, -46.5418},
+		{"Assaí Tatuapé", "R. Maria Cândida, 1899 — Tatuapé", -23.5496, -46.5392},
 	}
 	for _, m := range markets {
-		if _, err := db.Exec(
-			`INSERT OR IGNORE INTO supermarkets (name, address, lat, lng) VALUES (?, ?, ?, ?)`,
-			m.name, m.address, m.lat, m.lng,
+		if _, err := db.Exec(`
+			INSERT INTO supermarkets (name, address, lat, lng)
+			SELECT ?, ?, ?, ?
+			WHERE NOT EXISTS (SELECT 1 FROM supermarkets WHERE name = ?)`,
+			m.name, m.address, m.lat, m.lng, m.name,
 		); err != nil {
 			return fmt.Errorf("seed supermarket: %w", err)
 		}

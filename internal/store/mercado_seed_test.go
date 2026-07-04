@@ -12,6 +12,14 @@ var saoPauloSeedMarkets = []string{
 	"Assaí São Miguel",
 }
 
+var belenzinhoTatuapeMarkets = []string{
+	"Extra Belenzinho",
+	"Assaí Belém",
+	"Dia Belenzinho",
+	"Extra Tatuapé",
+	"Assaí Tatuapé",
+}
+
 const (
 	spLatMin = -23.75
 	spLatMax = -23.35
@@ -38,6 +46,35 @@ func TestSeedMercadoCatalog_saoPauloCapital(t *testing.T) {
 		}
 	}
 	for _, want := range saoPauloSeedMarkets {
+		if !names[want] {
+			t.Errorf("missing seeded supermarket %q", want)
+		}
+	}
+}
+
+func TestSeedMercadoCatalog_belenzinhoTatuapeMarkets(t *testing.T) {
+	s := openTestStore(t)
+
+	markets, err := s.ListSupermarkets()
+	if err != nil {
+		t.Fatal(err)
+	}
+	names := make(map[string]bool, len(markets))
+	for _, m := range markets {
+		names[m.Name] = true
+		if !strings.Contains(m.Address, "Belenzinho") &&
+			!strings.Contains(m.Address, "Belém") &&
+			!strings.Contains(m.Address, "Tatuapé") &&
+			!strings.Contains(m.Name, "Tatuapé") &&
+			!strings.Contains(m.Name, "Belenzinho") &&
+			!strings.Contains(m.Name, "Belém") {
+			continue
+		}
+		if m.Lat < spLatMin || m.Lat > spLatMax || m.Lng < spLngMin || m.Lng > spLngMax {
+			t.Errorf("market %q coords (%.4f, %.4f) outside São Paulo capital bounds", m.Name, m.Lat, m.Lng)
+		}
+	}
+	for _, want := range belenzinhoTatuapeMarkets {
 		if !names[want] {
 			t.Errorf("missing seeded supermarket %q", want)
 		}
