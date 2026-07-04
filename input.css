@@ -100,11 +100,52 @@
   }
 
   .mercado-nav-tab {
-    @apply px-2.5 sm:px-3 py-2 sm:py-1.5 rounded-lg text-[10px] sm:text-xs font-bold transition-all flex flex-col sm:flex-row items-center gap-0.5 sm:gap-1.5 flex-shrink-0 text-slate-600 hover:text-slate-900 hover:bg-slate-100 touch-manipulation;
+    @apply px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex flex-row items-center gap-1.5 flex-shrink-0 text-slate-600 hover:text-slate-900 hover:bg-slate-100 touch-manipulation;
   }
 
   .mercado-nav-tab.is-active {
     @apply bg-slate-900 text-white shadow-2xs hover:bg-slate-900 hover:text-white;
+  }
+
+  .mercado-main-with-bottom-nav {
+    padding-bottom: calc(4.75rem + env(safe-area-inset-bottom, 0px));
+  }
+
+  @media (min-width: 768px) {
+    .mercado-main-with-bottom-nav {
+      padding-bottom: 0;
+    }
+  }
+
+  .mercado-bottom-nav {
+    @apply fixed bottom-0 left-0 right-0 z-50 bg-white/95 backdrop-blur-md border-t border-slate-200 shadow-[0_-4px_24px_-4px_rgb(0_0_0_/_0.08)] safe-x;
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+
+  .mercado-bottom-nav {
+    display: grid;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    gap: 0.125rem;
+    padding-top: 0.375rem;
+    padding-left: max(0.25rem, env(safe-area-inset-left, 0px));
+    padding-right: max(0.25rem, env(safe-area-inset-right, 0px));
+  }
+
+  .mercado-bottom-tab {
+    @apply flex flex-col items-center justify-center gap-0.5 py-1.5 px-0.5 rounded-xl text-[10px] font-bold leading-none text-slate-600 touch-manipulation min-w-0 transition-colors;
+  }
+
+  .mercado-bottom-tab .cais-nav-icon {
+    width: 22px;
+    height: 22px;
+  }
+
+  .mercado-bottom-tab.is-active {
+    @apply bg-slate-900 text-white shadow-2xs;
+  }
+
+  .mercado-bottom-tab.is-active .cais-nav-icon {
+    @apply text-white;
   }
 
   .mercado-stat-card {

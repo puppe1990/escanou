@@ -134,12 +134,11 @@
   });
 
   function syncNavTabs() {
-    var nav = document.getElementById("cais-nav");
-    if (!nav) return;
     var path = window.location.pathname;
-    nav.querySelectorAll("a[data-cais-nav]").forEach(function (a) {
+    document.querySelectorAll("a[data-cais-nav]").forEach(function (a) {
       var href = a.getAttribute("data-cais-nav");
       var active = href === path;
+      a.classList.toggle("is-active", active);
       setClasses(a, active ? NAV_ON : NAV_OFF, active ? NAV_OFF : NAV_ON);
     });
   }
