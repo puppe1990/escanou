@@ -86,8 +86,19 @@
     }
   });
 
+  function isMainRouteRequest(evt) {
+    var elt = evt.detail.elt;
+    if (!elt) return false;
+    if (elt.matches && elt.matches("a[data-cais-nav][hx-boost]")) return true;
+    return !!(elt.closest && elt.closest("a[data-cais-nav][hx-boost]"));
+  }
+
   document.body.addEventListener("htmx:beforeRequest", function (evt) {
     savedFocus = document.activeElement;
+    if (isMainRouteRequest(evt)) {
+      var main = document.getElementById("cais-main");
+      if (main) main.setAttribute("aria-busy", "true");
+    }
     var target = optimisticTarget(evt.detail.elt);
     if (!target) return;
     var mode = target.getAttribute("data-cais-optimistic");
@@ -104,6 +115,8 @@
   });
 
   document.body.addEventListener("htmx:responseError", function (evt) {
+    var main = document.getElementById("cais-main");
+    if (main) main.removeAttribute("aria-busy");
     rollbackOptimistic();
     var target = optimisticTarget(evt.detail.elt);
     if (target) {
@@ -112,6 +125,8 @@
   });
 
   document.body.addEventListener("htmx:afterSettle", function () {
+    var main = document.getElementById("cais-main");
+    if (main) main.removeAttribute("aria-busy");
     optimisticState = null;
     document.querySelectorAll("[data-cais-optimistic][aria-busy]").forEach(function (el) {
       el.removeAttribute("aria-busy");

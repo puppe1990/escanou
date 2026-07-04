@@ -1,0 +1,14 @@
+{{- define "route_spinner" -}}
+<div
+  id="cais-route-spinner"
+  class="htmx-indicator cais-route-spinner"
+  role="status"
+  aria-live="polite"
+  aria-label="Carregando"
+>
+  <svg class="cais-route-spinner-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+    <circle class="mercado-spinner-track" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="3" />
+    <path class="mercado-spinner-head" d="M12 2a10 10 0 0 1 10 10" stroke="currentColor" stroke-width="3" stroke-linecap="round" />
+  </svg>
+</div>
+{{- end -}}

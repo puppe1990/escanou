@@ -243,6 +243,14 @@
     @apply w-full max-w-4xl mx-auto p-3 sm:p-4 md:p-5 bg-white rounded-xl border border-slate-200 shadow-2xs;
   }
 
+  .cais-route-spinner {
+    @apply absolute inset-0 z-20 items-center justify-center bg-slate-50/80 backdrop-blur-[2px];
+  }
+
+  .cais-route-spinner-icon {
+    @apply w-9 h-9 animate-spin text-indigo-600;
+  }
+
   .mercado-lookup-spinner {
     @apply items-center justify-center gap-2.5 py-4 px-3 rounded-xl border border-indigo-100 bg-indigo-50/80 text-indigo-800;
   }

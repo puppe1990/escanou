@@ -102,7 +102,10 @@
           </div>
         </nav>
       </div>
-      <main id="cais-main" data-cais-view-transition class="mercado-main-with-bottom-nav pb-[calc(4.75rem+env(safe-area-inset-bottom,0px))] md:pb-0 max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-4 sm:py-5 flex-grow w-full min-w-0 safe-x">{{ template "content" . }}</main>
+      <div class="relative flex-grow w-full min-w-0 mercado-main-with-bottom-nav pb-[calc(4.75rem+env(safe-area-inset-bottom,0px))] md:pb-0 max-w-7xl mx-auto">
+        {{ template "route_spinner" . }}
+        <main id="cais-main" data-cais-view-transition class="px-3 sm:px-6 lg:px-8 py-4 sm:py-5 w-full safe-x">{{ template "content" . }}</main>
+      </div>
     </div>
     <nav id="cais-bottom-nav" class="mercado-bottom-nav fixed inset-x-0 bottom-0 z-50 grid grid-cols-5 gap-0.5 pt-1.5 bg-white/95 backdrop-blur-md border-t border-slate-200 shadow-[0_-4px_24px_-4px_rgb(0_0_0_/_0.08)] safe-x md:hidden" style="padding-bottom: env(safe-area-inset-bottom, 0px);" role="tablist" aria-label="Navegação principal">
       {{ template "nav_links_mercado_bottom" . }}
