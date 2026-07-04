@@ -23,7 +23,8 @@ const (
 
 var ErrAlreadyConfirmed = errors.New("already confirmed")
 var ErrAlreadyDisputed = errors.New("already disputed")
-var ErrOwnReport = errors.New("cannot confirm own report")
+var ErrOppositeVote = errors.New("already voted the other way")
+var ErrOwnReport = errors.New("cannot vote on own report")
 
 func levelFromPoints(points int) int {
 	return points/100 + 1
@@ -369,6 +370,18 @@ func (s *SQLiteStore) ConfirmPriceReport(reportID, userID int64) (int, error) {
 	if ownerID == userID {
 		return 0, ErrOwnReport
 	}
+	var disputed int
+	if err := s.db.QueryRow(
+		`SELECT COUNT(*) FROM price_disputes WHERE price_report_id = ? AND user_id = ?`,
+		reportID, userID,
+	).Scan(&disputed); err != nil {
+		return 0, err
+	}
+	if disputed > 0 {
+		var count int
+		_ = s.db.QueryRow(`SELECT confirmations FROM price_reports WHERE id = ?`, reportID).Scan(&count)
+		return count, ErrOppositeVote
+	}
 	res, err := s.db.Exec(
 		`INSERT OR IGNORE INTO price_confirmations (price_report_id, user_id) VALUES (?, ?)`,
 		reportID, userID,
@@ -403,6 +416,18 @@ func (s *SQLiteStore) DisputePriceReport(reportID, userID int64) (int, error) {
 	}
 	if ownerID == userID {
 		return 0, ErrOwnReport
+	}
+	var confirmed int
+	if err := s.db.QueryRow(
+		`SELECT COUNT(*) FROM price_confirmations WHERE price_report_id = ? AND user_id = ?`,
+		reportID, userID,
+	).Scan(&confirmed); err != nil {
+		return 0, err
+	}
+	if confirmed > 0 {
+		var count int
+		_ = s.db.QueryRow(`SELECT disputes FROM price_reports WHERE id = ?`, reportID).Scan(&count)
+		return count, ErrOppositeVote
 	}
 	res, err := s.db.Exec(
 		`INSERT OR IGNORE INTO price_disputes (price_report_id, user_id) VALUES (?, ?)`,

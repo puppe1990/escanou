@@ -146,6 +146,49 @@ func TestSupermarketHandler_FlagPost_singleDispute_keepsFeedItem(t *testing.T) {
 	}
 }
 
+func TestSupermarketHandler_vote_mutuallyExclusive(t *testing.T) {
+	s := setupTestStore(t)
+	if err := s.SeedMercadoDemo(); err != nil {
+		t.Fatal(err)
+	}
+	ownerID, _ := s.CreateUser("owner3@test.com", "hash")
+	voterID, _ := s.CreateUser("voter3@test.com", "hash2")
+	pid, _ := s.CreateProduct("Macarrão", "4445556667778", "Mercearia")
+	markets, _ := s.ListSupermarkets()
+	reportID, _ := s.CreatePriceReport(ownerID, pid, markets[0].ID, 350)
+
+	h := NewSupermarketHandler(setupTestRenderer(t), s, testSite(), cais.Config{Env: "development"})
+
+	confirmReq := httptest.NewRequest(http.MethodPost, "/feed/"+formatInt64(reportID)+"/confirm", nil)
+	confirmReq.Header.Set("HX-Request", "true")
+	confirmReq = session.WithUserID(confirmReq, voterID)
+	confirmRR := httptest.NewRecorder()
+	h.ConfirmPost(confirmRR, confirmReq, reportID)
+	if confirmRR.Code != http.StatusOK {
+		t.Fatalf("confirm status = %d", confirmRR.Code)
+	}
+	confirmBody := confirmRR.Body.String()
+	if strings.Count(confirmBody, "disabled") < 2 {
+		t.Errorf("both vote buttons should be disabled after confirm: %s", confirmBody)
+	}
+
+	flagReq := httptest.NewRequest(http.MethodPost, "/feed/"+formatInt64(reportID)+"/flag", nil)
+	flagReq.Header.Set("HX-Request", "true")
+	flagReq = session.WithUserID(flagReq, voterID)
+	flagRR := httptest.NewRecorder()
+	h.FlagPost(flagRR, flagReq, reportID)
+	if flagRR.Code != http.StatusOK {
+		t.Fatalf("flag status = %d", flagRR.Code)
+	}
+	reports, err := s.ListFeedReports(10, voterID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(reports) != 1 || reports[0].Disputes != 0 || reports[0].Confirmations != 1 {
+		t.Fatalf("opposite vote should not change counts: %+v", reports[0])
+	}
+}
+
 func TestSupermarketHandler_ConfirmPost_returnsVotePartial(t *testing.T) {
 	s := setupTestStore(t)
 	if err := s.SeedMercadoDemo(); err != nil {

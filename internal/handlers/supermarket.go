@@ -369,12 +369,8 @@ func (h *SupermarketHandler) ConfirmPost(w http.ResponseWriter, r *http.Request,
 	userID, _ := session.UserID(r)
 	count, err := h.store.ConfirmPriceReport(reportID, userID)
 	disputeCount := h.disputeCountFor(reportID)
-	if err == store.ErrOwnReport || err == store.ErrAlreadyConfirmed {
-		h.renderFeedVotes(w, feedVoteData{
-			ID: int(reportID), ConfirmedCount: count, DisputeCount: disputeCount,
-			ConfirmDisabled: true, DisputeDisabled: h.viewerDisputed(reportID, userID),
-			OwnReport: err == store.ErrOwnReport,
-		})
+	if err == store.ErrOwnReport || err == store.ErrAlreadyConfirmed || err == store.ErrOppositeVote {
+		h.renderFeedVotes(w, h.feedVoteState(reportID, userID, count, disputeCount, err == store.ErrOwnReport))
 		return
 	}
 	if err != nil {
@@ -382,10 +378,7 @@ func (h *SupermarketHandler) ConfirmPost(w http.ResponseWriter, r *http.Request,
 		return
 	}
 	cais.SetToast(w, "+2 pts — obrigado por confirmar!")
-	h.renderFeedVotes(w, feedVoteData{
-		ID: int(reportID), ConfirmedCount: count, DisputeCount: disputeCount,
-		ConfirmDisabled: true, DisputeDisabled: h.viewerDisputed(reportID, userID),
-	})
+	h.renderFeedVotes(w, h.feedVoteState(reportID, userID, count, disputeCount, false))
 }
 
 func (h *SupermarketHandler) FlagPost(w http.ResponseWriter, r *http.Request, reportID int64) {
@@ -395,13 +388,8 @@ func (h *SupermarketHandler) FlagPost(w http.ResponseWriter, r *http.Request, re
 	userID, _ := session.UserID(r)
 	count, err := h.store.DisputePriceReport(reportID, userID)
 	confirmCount := h.confirmCountFor(reportID)
-	if err == store.ErrOwnReport || err == store.ErrAlreadyDisputed {
-		h.renderFeedVotes(w, feedVoteData{
-			ID: int(reportID), ConfirmedCount: confirmCount, DisputeCount: count,
-			ConfirmDisabled: h.viewerConfirmed(reportID, userID),
-			DisputeDisabled: true,
-			OwnReport: err == store.ErrOwnReport,
-		})
+	if err == store.ErrOwnReport || err == store.ErrAlreadyDisputed || err == store.ErrOppositeVote {
+		h.renderFeedVotes(w, h.feedVoteState(reportID, userID, confirmCount, count, err == store.ErrOwnReport))
 		return
 	}
 	if err != nil {
@@ -415,11 +403,7 @@ func (h *SupermarketHandler) FlagPost(w http.ResponseWriter, r *http.Request, re
 		w.WriteHeader(http.StatusOK)
 		return
 	}
-	h.renderFeedVotes(w, feedVoteData{
-		ID: int(reportID), ConfirmedCount: confirmCount, DisputeCount: count,
-		ConfirmDisabled: h.viewerConfirmed(reportID, userID),
-		DisputeDisabled: true,
-	})
+	h.renderFeedVotes(w, h.feedVoteState(reportID, userID, confirmCount, count, false))
 }
 
 type feedVoteData struct {
@@ -429,6 +413,16 @@ type feedVoteData struct {
 	ConfirmDisabled bool
 	DisputeDisabled bool
 	OwnReport       bool
+}
+
+func (h *SupermarketHandler) feedVoteState(reportID, userID int64, confirms, disputes int, ownReport bool) feedVoteData {
+	voted := h.viewerConfirmed(reportID, userID) || h.viewerDisputed(reportID, userID)
+	return feedVoteData{
+		ID: int(reportID), ConfirmedCount: confirms, DisputeCount: disputes,
+		ConfirmDisabled: ownReport || voted,
+		DisputeDisabled: ownReport || voted,
+		OwnReport:       ownReport,
+	}
 }
 
 func (h *SupermarketHandler) renderFeedVotes(w http.ResponseWriter, data feedVoteData) {
@@ -518,8 +512,8 @@ func priceReportsToViews(reports []models.PriceReport, viewerID int64) []PriceSc
 			Level:           r.ContributorLvl,
 			ConfirmedCount:  r.Confirmations,
 			DisputeCount:    r.Disputes,
-			ConfirmDisabled: r.ViewerConfirmed || r.UserID == viewerID,
-			DisputeDisabled: r.ViewerDisputed || r.UserID == viewerID,
+			ConfirmDisabled: r.ViewerConfirmed || r.ViewerDisputed || r.UserID == viewerID,
+			DisputeDisabled: r.ViewerConfirmed || r.ViewerDisputed || r.UserID == viewerID,
 			OwnReport:       r.UserID == viewerID,
 			Verified:        store.ReportVerified(r.Confirmations),
 			Outdated:        store.ReportOutdated(r.CreatedAt),
