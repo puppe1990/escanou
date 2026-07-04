@@ -491,4 +491,24 @@
   .mercado-leader-points {
     @apply text-xs font-black text-amber-600 flex-shrink-0;
   }
+
+  .mercado-feed-votes {
+    @apply flex items-center gap-2;
+  }
+
+  .mercado-vote-btn {
+    @apply inline-flex items-center justify-center gap-1 min-w-[2.5rem] h-8 px-2.5 rounded-lg text-xs font-bold transition-colors touch-manipulation;
+  }
+
+  .mercado-vote-up {
+    @apply bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200 hover:bg-emerald-100 hover:ring-emerald-300;
+  }
+
+  .mercado-vote-up:disabled {
+    @apply opacity-50 cursor-not-allowed;
+  }
+
+  .mercado-vote-down {
+    @apply bg-rose-50 text-rose-700 ring-1 ring-rose-200 hover:bg-rose-100 hover:ring-rose-300;
+  }
 }
