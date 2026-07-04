@@ -44,6 +44,7 @@ type Store interface {
 	CreatePriceReport(userID, productID, supermarketID int64, priceCents int) (int64, error)
 	ConfirmPriceReport(reportID, userID int64) (int, error)
 	DisputePriceReport(reportID, userID int64) (int, error)
+	UndoPriceVote(reportID, userID int64) (int, int, error)
 	FlagPriceReport(reportID int64) error
 	ListBadges(userID int64) ([]models.Badge, error)
 	Leaderboard(limit int, currentUserID int64) ([]models.LeaderboardEntry, error)

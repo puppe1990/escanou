@@ -24,6 +24,7 @@ const (
 var ErrAlreadyConfirmed = errors.New("already confirmed")
 var ErrAlreadyDisputed = errors.New("already disputed")
 var ErrOppositeVote = errors.New("already voted the other way")
+var ErrNoVote = errors.New("no vote to undo")
 var ErrOwnReport = errors.New("cannot vote on own report")
 
 func levelFromPoints(points int) int {
@@ -459,6 +460,68 @@ func (s *SQLiteStore) DisputePriceReport(reportID, userID int64) (int, error) {
 func (s *SQLiteStore) FlagPriceReport(reportID int64) error {
 	_, err := s.db.Exec(`UPDATE price_reports SET flagged = 1 WHERE id = ?`, reportID)
 	return err
+}
+
+func (s *SQLiteStore) UnflagPriceReport(reportID int64) error {
+	_, err := s.db.Exec(`UPDATE price_reports SET flagged = 0 WHERE id = ?`, reportID)
+	return err
+}
+
+func (s *SQLiteStore) UndoPriceVote(reportID, userID int64) (int, int, error) {
+	res, err := s.db.Exec(
+		`DELETE FROM price_confirmations WHERE price_report_id = ? AND user_id = ?`,
+		reportID, userID,
+	)
+	if err != nil {
+		return 0, 0, fmt.Errorf("undo confirm: %w", err)
+	}
+	if n, _ := res.RowsAffected(); n > 0 {
+		_, err = s.db.Exec(
+			`UPDATE price_reports SET confirmations = confirmations - 1 WHERE id = ? AND confirmations > 0`,
+			reportID,
+		)
+		if err != nil {
+			return 0, 0, err
+		}
+		if err := s.addPoints(userID, -pointsPerConfirm); err != nil {
+			return 0, 0, err
+		}
+		return s.reportVoteCounts(reportID)
+	}
+
+	res, err = s.db.Exec(
+		`DELETE FROM price_disputes WHERE price_report_id = ? AND user_id = ?`,
+		reportID, userID,
+	)
+	if err != nil {
+		return 0, 0, fmt.Errorf("undo dispute: %w", err)
+	}
+	if n, _ := res.RowsAffected(); n > 0 {
+		_, err = s.db.Exec(
+			`UPDATE price_reports SET disputes = disputes - 1 WHERE id = ? AND disputes > 0`,
+			reportID,
+		)
+		if err != nil {
+			return 0, 0, err
+		}
+		confirms, disputes, err := s.reportVoteCounts(reportID)
+		if err != nil {
+			return 0, 0, err
+		}
+		if disputes < DisputeFlagThreshold {
+			_ = s.UnflagPriceReport(reportID)
+		}
+		return confirms, disputes, nil
+	}
+	return 0, 0, ErrNoVote
+}
+
+func (s *SQLiteStore) reportVoteCounts(reportID int64) (int, int, error) {
+	var confirms, disputes int
+	err := s.db.QueryRow(
+		`SELECT confirmations, disputes FROM price_reports WHERE id = ?`, reportID,
+	).Scan(&confirms, &disputes)
+	return confirms, disputes, err
 }
 
 func (s *SQLiteStore) ListBadges(userID int64) ([]models.Badge, error) {

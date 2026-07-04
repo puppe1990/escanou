@@ -28,6 +28,7 @@ func registerRoutes(r *cais.Router, deps Deps, cfg cais.Config) {
 		g.Get("/feed", super.Feed)
 		g.Post("/feed/{id}/confirm", cais.IntParam("id", super.ConfirmPost))
 		g.Post("/feed/{id}/flag", cais.IntParam("id", super.FlagPost))
+		g.Post("/feed/{id}/undo", cais.IntParam("id", super.UndoPost))
 		g.Get("/achievements", super.Achievements)
 		g.Get("/nfce", super.NFCe)
 	})

@@ -189,6 +189,46 @@ func TestSupermarketHandler_vote_mutuallyExclusive(t *testing.T) {
 	}
 }
 
+func TestSupermarketHandler_UndoPost_restoresVoting(t *testing.T) {
+	s := setupTestStore(t)
+	if err := s.SeedMercadoDemo(); err != nil {
+		t.Fatal(err)
+	}
+	ownerID, _ := s.CreateUser("owner4@test.com", "hash")
+	voterID, _ := s.CreateUser("voter4@test.com", "hash2")
+	pid, _ := s.CreateProduct("Óleo", "5556667778880", "Mercearia")
+	markets, _ := s.ListSupermarkets()
+	reportID, _ := s.CreatePriceReport(ownerID, pid, markets[0].ID, 799)
+
+	h := NewSupermarketHandler(setupTestRenderer(t), s, testSite(), cais.Config{Env: "development"})
+
+	confirmReq := httptest.NewRequest(http.MethodPost, "/feed/"+formatInt64(reportID)+"/confirm", nil)
+	confirmReq.Header.Set("HX-Request", "true")
+	confirmReq = session.WithUserID(confirmReq, voterID)
+	confirmRR := httptest.NewRecorder()
+	h.ConfirmPost(confirmRR, confirmReq, reportID)
+
+	undoReq := httptest.NewRequest(http.MethodPost, "/feed/"+formatInt64(reportID)+"/undo", nil)
+	undoReq.Header.Set("HX-Request", "true")
+	undoReq = session.WithUserID(undoReq, voterID)
+	undoRR := httptest.NewRecorder()
+	h.UndoPost(undoRR, undoReq, reportID)
+
+	if undoRR.Code != http.StatusOK {
+		t.Fatalf("undo status = %d, body: %s", undoRR.Code, undoRR.Body.String())
+	}
+	body := undoRR.Body.String()
+	if strings.Contains(body, "Desfazer") {
+		t.Error("undo should hide Desfazer button")
+	}
+	if strings.Count(body, "disabled") != 0 {
+		t.Errorf("vote buttons should be enabled after undo: %s", body)
+	}
+	if !strings.Contains(body, `hx-post="/feed/`) {
+		t.Error("vote buttons should be clickable after undo")
+	}
+}
+
 func TestSupermarketHandler_ConfirmPost_returnsVotePartial(t *testing.T) {
 	s := setupTestStore(t)
 	if err := s.SeedMercadoDemo(); err != nil {

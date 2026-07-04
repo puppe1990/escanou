@@ -516,6 +516,18 @@
     @apply opacity-50 cursor-not-allowed;
   }
 
+  .mercado-vote-up.is-active {
+    @apply bg-emerald-600 text-white ring-emerald-700;
+  }
+
+  .mercado-vote-down.is-active {
+    @apply bg-rose-600 text-white ring-rose-700;
+  }
+
+  .mercado-vote-undo {
+    @apply text-[10px] font-bold text-slate-500 hover:text-slate-800 px-2 py-1 rounded-md touch-manipulation;
+  }
+
   .mercado-feed-own-hint {
     @apply text-[10px] font-medium text-slate-500;
   }

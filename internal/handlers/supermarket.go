@@ -63,6 +63,8 @@ type PriceScanView struct {
 	DisputeCount    int
 	ConfirmDisabled bool
 	DisputeDisabled bool
+	ViewerConfirmed bool
+	ViewerDisputed  bool
 	OwnReport       bool
 	Verified        bool
 	Outdated        bool
@@ -406,21 +408,45 @@ func (h *SupermarketHandler) FlagPost(w http.ResponseWriter, r *http.Request, re
 	h.renderFeedVotes(w, h.feedVoteState(reportID, userID, confirmCount, count, false))
 }
 
+func (h *SupermarketHandler) UndoPost(w http.ResponseWriter, r *http.Request, reportID int64) {
+	if !h.requireAuth(w, r) {
+		return
+	}
+	userID, _ := session.UserID(r)
+	confirms, disputes, err := h.store.UndoPriceVote(reportID, userID)
+	if err == store.ErrNoVote {
+		h.renderFeedVotes(w, h.feedVoteState(reportID, userID, confirms, disputes, false))
+		return
+	}
+	if err != nil {
+		http.Error(w, "undo failed", http.StatusInternalServerError)
+		return
+	}
+	cais.SetToast(w, "Voto removido")
+	h.renderFeedVotes(w, h.feedVoteState(reportID, userID, confirms, disputes, false))
+}
+
 type feedVoteData struct {
 	ID              int
 	ConfirmedCount  int
 	DisputeCount    int
 	ConfirmDisabled bool
 	DisputeDisabled bool
+	ViewerConfirmed bool
+	ViewerDisputed  bool
 	OwnReport       bool
 }
 
 func (h *SupermarketHandler) feedVoteState(reportID, userID int64, confirms, disputes int, ownReport bool) feedVoteData {
-	voted := h.viewerConfirmed(reportID, userID) || h.viewerDisputed(reportID, userID)
+	confirmed := h.viewerConfirmed(reportID, userID)
+	disputed := h.viewerDisputed(reportID, userID)
+	voted := confirmed || disputed
 	return feedVoteData{
 		ID: int(reportID), ConfirmedCount: confirms, DisputeCount: disputes,
 		ConfirmDisabled: ownReport || voted,
 		DisputeDisabled: ownReport || voted,
+		ViewerConfirmed: confirmed,
+		ViewerDisputed:  disputed,
 		OwnReport:       ownReport,
 	}
 }
@@ -514,6 +540,8 @@ func priceReportsToViews(reports []models.PriceReport, viewerID int64) []PriceSc
 			DisputeCount:    r.Disputes,
 			ConfirmDisabled: r.ViewerConfirmed || r.ViewerDisputed || r.UserID == viewerID,
 			DisputeDisabled: r.ViewerConfirmed || r.ViewerDisputed || r.UserID == viewerID,
+			ViewerConfirmed: r.ViewerConfirmed,
+			ViewerDisputed:  r.ViewerDisputed,
 			OwnReport:       r.UserID == viewerID,
 			Verified:        store.ReportVerified(r.Confirmations),
 			Outdated:        store.ReportOutdated(r.CreatedAt),
