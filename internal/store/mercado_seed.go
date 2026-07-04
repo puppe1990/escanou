@@ -5,13 +5,14 @@ import (
 	"fmt"
 )
 
-// SeedMercadoDemo inserts supermarket domain demo data (idempotent).
+// SeedMercadoDemo inserts catalog data (supermarkets, badges, reference products).
+// Does not seed fake price reports — users build real history by scanning.
 func (s *SQLiteStore) SeedMercadoDemo() error {
 	db := s.db.Raw()
 	if err := seedMercadoCatalog(db); err != nil {
 		return err
 	}
-	return seedMercadoReports(db)
+	return seedMercadoDemoProfile(db)
 }
 
 func seedMercadoCatalog(db *sql.DB) error {
@@ -66,51 +67,15 @@ func seedMercadoCatalog(db *sql.DB) error {
 	return nil
 }
 
-func seedMercadoReports(db *sql.DB) error {
+func seedMercadoDemoProfile(db *sql.DB) error {
 	var demoUserID int64
 	err := db.QueryRow(`SELECT id FROM users WHERE email = ?`, "demo@example.com").Scan(&demoUserID)
 	if err != nil {
 		return nil // auth seed may not exist yet
 	}
-	_, _ = db.Exec(
-		`INSERT OR IGNORE INTO user_profiles (user_id, display_name, points, city) VALUES (?, ?, ?, ?)`,
-		demoUserID, "Você", 420, "São Paulo",
+	_, err = db.Exec(
+		`INSERT OR IGNORE INTO user_profiles (user_id, display_name, points, city) VALUES (?, ?, 0, ?)`,
+		demoUserID, "Demo", defaultCity,
 	)
-	var count int
-	if err := db.QueryRow(`SELECT COUNT(*) FROM price_reports`).Scan(&count); err != nil || count > 0 {
-		return err
-	}
-	type seedReport struct {
-		barcode string
-		market  string
-		cents   int
-		conf    int
-	}
-	reports := []seedReport{
-		{"7896256801011", "Pão de Açúcar Paulista", 549, 8},
-		{"7894900011517", "Extra Penha", 821, 3},
-		{"7891081001015", "Carrefour Tatuapé", 2890, 12},
-		{"7891000000001", "Assaí São Miguel", 1850, 1},
-	}
-	for _, r := range reports {
-		var productID, marketID int64
-		if err := db.QueryRow(`SELECT id FROM products WHERE barcode = ?`, r.barcode).Scan(&productID); err != nil {
-			continue
-		}
-		if err := db.QueryRow(`SELECT id FROM supermarkets WHERE name = ?`, r.market).Scan(&marketID); err != nil {
-			continue
-		}
-		if _, err := db.Exec(
-			`INSERT INTO price_reports (product_id, supermarket_id, user_id, price_cents, confirmations) VALUES (?, ?, ?, ?, ?)`,
-			productID, marketID, demoUserID, r.cents, r.conf,
-		); err != nil {
-			return err
-		}
-	}
-	_, _ = db.Exec(`
-		INSERT OR IGNORE INTO user_badges (user_id, badge_id)
-		SELECT ?, id FROM badges WHERE slug IN ('first_scan', 'verifier')`,
-		demoUserID,
-	)
-	return nil
+	return err
 }

@@ -77,6 +77,18 @@ func TestGetOrCreateProfile_defaultCitySaoPaulo(t *testing.T) {
 	}
 }
 
+func TestSeedMercadoDemo_noFakePriceReports(t *testing.T) {
+	s := openTestStore(t)
+
+	var count int
+	if err := s.db.Raw().QueryRow(`SELECT COUNT(*) FROM price_reports`).Scan(&count); err != nil {
+		t.Fatal(err)
+	}
+	if count != 0 {
+		t.Fatalf("seed should not insert fake price reports, got %d", count)
+	}
+}
+
 func TestSeedMercadoDemo_demoUserCitySaoPaulo(t *testing.T) {
 	s := openTestStore(t)
 
