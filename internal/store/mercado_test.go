@@ -67,6 +67,19 @@ func TestMercado_loadStats(t *testing.T) {
 
 func openTestStore(t *testing.T) *SQLiteStore {
 	t.Helper()
+	s, err := NewSQLiteStore(":memory:", "test")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := s.SeedMercadoDemo(); err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() { _ = s.Close() })
+	return s
+}
+
+func openDevTestStore(t *testing.T) *SQLiteStore {
+	t.Helper()
 	s, err := NewSQLiteStore(":memory:", "development")
 	if err != nil {
 		t.Fatal(err)

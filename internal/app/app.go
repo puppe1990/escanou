@@ -45,7 +45,7 @@ func New(cfg cais.Config, deps Deps) (*App, error) {
 
 	site := deps.Site
 	if site.AppName == "" {
-		site = meta.SiteFrom("mercado", cfg.AppURL)
+		site = meta.SiteFrom("Escanou", cfg.AppURL)
 	}
 	site.Env = cfg.Env
 	deps.Site = site

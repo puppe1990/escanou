@@ -136,7 +136,7 @@ func TestSeedMercadoDemo_noFakePriceReports(t *testing.T) {
 }
 
 func TestSeedMercadoDemoFeedSample_demoCanVote(t *testing.T) {
-	s := openTestStore(t)
+	s := openDevTestStore(t)
 
 	var demoID int64
 	if err := s.db.Raw().QueryRow(`SELECT id FROM users WHERE email = ?`, "demo@example.com").Scan(&demoID); err != nil {
@@ -173,7 +173,7 @@ func TestSeedMercadoDemoFeedSample_demoCanVote(t *testing.T) {
 }
 
 func TestSeedMercadoDemo_demoUserCitySaoPaulo(t *testing.T) {
-	s := openTestStore(t)
+	s := openDevTestStore(t)
 
 	var demoUserID int64
 	err := s.db.Raw().QueryRow(`SELECT id FROM users WHERE email = ?`, "demo@example.com").Scan(&demoUserID)

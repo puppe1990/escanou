@@ -29,7 +29,7 @@ func main() {
 
 	active := s
 	err = console.Run(console.Options{
-		AppName:  "mercado",
+		AppName:  "Escanou",
 		Config:   cfg,
 		Bindings: bindings(active),
 		Reload: func() (map[string]any, error) {

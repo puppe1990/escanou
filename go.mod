@@ -3,7 +3,7 @@ module github.com/puppe1990/mercado
 go 1.26.4
 
 require (
-	github.com/puppe1990/cais v0.6.0
+	github.com/puppe1990/cais v0.6.1-0.20260704171901-8e0702a04151
 	modernc.org/sqlite v1.53.0
 )
 
