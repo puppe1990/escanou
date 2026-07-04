@@ -9,5 +9,8 @@
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "test": "npm run format:check"
+  },
+  "dependencies": {
+    "leaflet": "^1.9.4"
   }
 }

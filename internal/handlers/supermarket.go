@@ -1,7 +1,9 @@
 package handlers
 
 import (
+	"encoding/json"
 	"fmt"
+	"html/template"
 	"net/http"
 	"strconv"
 	"strings"
@@ -41,6 +43,7 @@ type SupermarketPageData struct {
 	SupermarketOpts []SupermarketOption
 	SubmissionCount   int
 	ShoppingListTotal string
+	MapMarkersJSON    template.JS
 }
 
 type SupermarketOption struct {
@@ -72,6 +75,8 @@ type MarketView struct {
 	Distance string
 	Offers   int
 	BestDeal string
+	Lat      float64
+	Lng      float64
 }
 
 type ProductView struct {
@@ -166,6 +171,7 @@ func (h *SupermarketHandler) Map(w http.ResponseWriter, r *http.Request) {
 	data := h.base(r)
 	data.ActiveNav = "map"
 	data.Markets = h.marketViews()
+	data.MapMarkersJSON = h.mapMarkersJSON(data.Markets)
 	httpx.RenderOrError(w, h.renderer, "base", "map", data, h.cfg)
 }
 
@@ -561,9 +567,38 @@ func (h *SupermarketHandler) marketViews() []MarketView {
 			Name: m.Name, Address: m.Address,
 			Distance: fmt.Sprintf("%.1f km", float64(i+1)*1.2),
 			Offers:   offers, BestDeal: best,
+			Lat:      m.Lat, Lng: m.Lng,
 		})
 	}
 	return out
+}
+
+type mapMarkerPayload struct {
+	Name     string  `json:"name"`
+	Address  string  `json:"address"`
+	Lat      float64 `json:"lat"`
+	Lng      float64 `json:"lng"`
+	Offers   int     `json:"offers"`
+	BestDeal string  `json:"bestDeal"`
+	Distance string  `json:"distance"`
+}
+
+func (h *SupermarketHandler) mapMarkersJSON(markets []MarketView) template.JS {
+	payload := make([]mapMarkerPayload, 0, len(markets))
+	for _, m := range markets {
+		if m.Lat == 0 && m.Lng == 0 {
+			continue
+		}
+		payload = append(payload, mapMarkerPayload{
+			Name: m.Name, Address: m.Address, Lat: m.Lat, Lng: m.Lng,
+			Offers: m.Offers, BestDeal: m.BestDeal, Distance: m.Distance,
+		})
+	}
+	b, err := json.Marshal(payload)
+	if err != nil {
+		return template.JS("[]")
+	}
+	return template.JS(b)
 }
 
 func (h *SupermarketHandler) badgeViews(userID int64) []BadgeView {

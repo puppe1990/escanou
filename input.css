@@ -519,4 +519,16 @@
   .mercado-feed-own-hint {
     @apply text-[10px] font-medium text-slate-500;
   }
+
+  .mercado-map {
+    @apply z-0 bg-slate-100;
+  }
+
+  .mercado-map .leaflet-container {
+    @apply h-full w-full rounded-xl font-sans;
+  }
+
+  .mercado-map-popup {
+    @apply text-xs text-slate-700 leading-snug;
+  }
 }
