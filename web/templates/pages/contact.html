@@ -1,0 +1,37 @@
+{{ define "title" }}{{ t "contact.title" }}{{ end }} {{ define "content" }}
+<div class="w-full max-w-md mx-auto p-4 md:p-5 bg-white rounded-xl border border-slate-200 shadow-2xs">
+  <div class="mb-4 pb-4 border-b border-slate-100">
+    <h2 class="text-lg font-black tracking-tight text-slate-900 font-display">{{ t "contact.heading" }}</h2>
+    <p class="text-[11px] text-slate-500 font-medium mt-1">{{ t "contact.title" }}</p>
+  </div>
+  <form
+    id="contact-form"
+    {{ hxForm "/contact" "#form-errors" "#contact-spinner" }}
+  >
+    <div id="form-errors"></div>
+    <label class="block mb-2 text-sm font-medium text-slate-700" for="name">{{ t "contact.name_label" }}</label>
+    <input
+      class="w-full border border-slate-300 rounded-lg px-3 py-2 mb-4 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none"
+      type="text"
+      id="name"
+      name="name"
+      required
+    />
+    <label class="block mb-2 text-sm font-medium text-slate-700" for="email">{{ t "contact.email_label" }}</label>
+    <input
+      class="w-full border border-slate-300 rounded-lg px-3 py-2 mb-4 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none"
+      type="email"
+      id="email"
+      name="email"
+      required
+    />
+    <button
+      class="w-full bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold py-2.5 px-4 rounded-lg transition shadow-2xs"
+      type="submit"
+    >
+      <span class="htmx-indicator" id="contact-spinner">{{ t "contact.sending" }}</span>
+      <span class="htmx-request-hide">{{ t "contact.submit" }}</span>
+    </button>
+  </form>
+</div>
+{{ end }}

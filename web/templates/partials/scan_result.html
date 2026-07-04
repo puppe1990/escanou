@@ -1,0 +1,51 @@
+{{- define "scan_result" -}}
+<div id="scan-result" class="space-y-3">
+  {{ if .LookupError }}
+  <p class="text-xs text-rose-600 font-semibold">{{ .LookupError }}</p>
+  {{ end }}
+  {{ if .LookupProduct }}
+  <div class="p-3 bg-emerald-50 border border-emerald-200 rounded-lg">
+    <p class="text-xs font-bold text-emerald-900">{{ .LookupProduct.Name }}</p>
+    <p class="text-[10px] text-emerald-700 font-mono">
+      {{ .LookupProduct.Barcode }}{{ if .LookupProduct.AvgPrice }} • média {{ .LookupProduct.AvgPrice }}{{ end }}
+    </p>
+    {{ if .LoggedIn }}
+    <form
+      method="post"
+      action="/scan/report"
+      class="mt-3 space-y-2"
+      data-cais-last-supermarket-form
+    >
+      {{ csrfField .CSRFToken }}
+      <input type="hidden" name="product_id" value="{{ .ReportProductID }}" />
+      <select
+        name="supermarket_id"
+        class="w-full border border-slate-300 rounded-lg px-3 py-2 text-xs"
+        data-cais-supermarket-select
+        required
+      >
+        <option value="">Supermercado</option>
+        {{ range .SupermarketOpts }}<option value="{{ .ID }}">{{ .Name }}</option>{{ end }}
+      </select>
+      <input
+        name="price"
+        class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm font-mono"
+        placeholder="Preço (ex: 5,49)"
+        required
+      />
+      <button
+        type="submit"
+        class="w-full bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold py-2 rounded-lg"
+      >
+        Registrar preço (+10 pts)
+      </button>
+    </form>
+    {{ else }}
+    <p class="text-[10px] text-slate-600 mt-2">
+      <a href="/login" class="text-indigo-700 font-bold">Entre</a> para registrar preços.
+    </p>
+    {{ end }}
+  </div>
+  {{ end }}
+</div>
+{{- end -}}

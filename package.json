@@ -1,0 +1,13 @@
+{
+  "private": true,
+  "devDependencies": {
+    "html5-qrcode": "^2.3.8",
+    "prettier": "^3.5.3",
+    "tailwindcss": "^3.4.17"
+  },
+  "scripts": {
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "test": "npm run format:check"
+  }
+}

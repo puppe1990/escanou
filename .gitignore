@@ -1,0 +1,12 @@
+bin/
+data/
+web/static/css/styles.css
+node_modules/
+tmp/
+.air/
+*.db
+*.db-wal
+*.db-shm
+.env
+.playwright-cli/
+.DS_Store
