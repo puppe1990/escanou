@@ -10,6 +10,7 @@ import (
 
 	_ "modernc.org/sqlite"
 
+	"github.com/puppe1990/cais/pkg/cais/barcode"
 	"github.com/puppe1990/cais/pkg/cais/devlog"
 	"github.com/puppe1990/cais/pkg/cais/session"
 	caissqlite "github.com/puppe1990/cais/pkg/cais/sqlite"
@@ -31,15 +32,19 @@ type Store interface {
 	ResetPasswordWithToken(token, passwordHash string) error
 	Sessions() session.Store
 	LoadStats(userID int64) (level, points, rank int, err error)
+	GetOrCreateProfile(userID int64) (models.UserProfile, error)
 	ListProducts(limit int) ([]models.Product, error)
 	FindProductByBarcode(barcode string) (models.Product, bool, error)
 	CreateProduct(name, barcode, category string) (int64, error)
+	CreateProductFromOFF(off barcode.Product) (models.Product, error)
 	ProductAvgPriceCents(productID int64) (int, error)
 	ListSupermarkets() ([]models.Supermarket, error)
-	ListFeedReports(limit int) ([]models.PriceReport, error)
+	ListFeedReports(limit int, viewerUserID int64) ([]models.PriceReport, error)
 	ListUserReports(userID int64, limit int) ([]models.PriceReport, error)
 	CreatePriceReport(userID, productID, supermarketID int64, priceCents int) (int64, error)
 	ConfirmPriceReport(reportID, userID int64) (int, error)
+	DisputePriceReport(reportID, userID int64) (int, error)
+	UndoPriceVote(reportID, userID int64) (int, int, error)
 	FlagPriceReport(reportID int64) error
 	ListBadges(userID int64) ([]models.Badge, error)
 	Leaderboard(limit int, currentUserID int64) ([]models.LeaderboardEntry, error)
@@ -88,6 +93,10 @@ func NewSQLiteStore(dsn string, env string) (*SQLiteStore, error) {
 	st := &SQLiteStore{db: wrapped}
 	if env == "development" {
 		if err := st.SeedMercadoDemo(); err != nil {
+			_ = wrapped.Close()
+			return nil, err
+		}
+		if err := st.SeedMercadoDemoFeedSample(); err != nil {
 			_ = wrapped.Close()
 			return nil, err
 		}

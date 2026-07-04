@@ -59,8 +59,9 @@
     @apply hidden;
   }
 
+  .htmx-indicator.htmx-request,
   .htmx-request .htmx-indicator {
-    @apply inline-block;
+    @apply flex;
   }
 
   .htmx-request .htmx-request-hide {
@@ -94,7 +95,9 @@
     @apply sticky top-0 z-40 safe-top;
     background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
     border-bottom: 1px solid rgb(226 232 240 / 0.9);
-    box-shadow: 0 1px 0 rgb(255 255 255 / 0.8) inset, 0 4px 24px -12px rgb(15 23 42 / 0.12);
+    box-shadow:
+      0 1px 0 rgb(255 255 255 / 0.8) inset,
+      0 4px 24px -12px rgb(15 23 42 / 0.12);
   }
 
   .mercado-header-inner {
@@ -206,5 +209,342 @@
 
   .mercado-page-card {
     @apply w-full max-w-4xl mx-auto p-3 sm:p-4 md:p-5 bg-white rounded-xl border border-slate-200 shadow-2xs;
+  }
+
+  .mercado-lookup-spinner {
+    @apply items-center justify-center gap-2.5 py-4 px-3 rounded-xl border border-indigo-100 bg-indigo-50/80 text-indigo-800;
+  }
+
+  .mercado-spinner-icon {
+    @apply w-5 h-5 flex-shrink-0 animate-spin text-indigo-600;
+  }
+
+  .mercado-spinner-track {
+    @apply opacity-20;
+  }
+
+  .mercado-spinner-head {
+    @apply opacity-100;
+  }
+
+  .mercado-lookup-spinner-text {
+    @apply text-xs font-bold tracking-tight;
+  }
+
+  .mercado-shopping-list {
+    @apply rounded-xl border border-slate-200 overflow-hidden bg-white;
+  }
+
+  .mercado-shopping-items {
+    @apply divide-y divide-slate-100;
+  }
+
+  .mercado-shopping-item {
+    @apply flex items-center justify-between gap-3 px-3 py-2.5 sm:px-4 sm:py-3;
+  }
+
+  .mercado-shopping-item-main {
+    @apply flex flex-col gap-0.5;
+  }
+
+  .mercado-shopping-item-name {
+    @apply text-xs sm:text-sm font-extrabold text-slate-900 truncate;
+  }
+
+  .mercado-shopping-item-market {
+    @apply text-[10px] text-slate-500 font-medium truncate;
+  }
+
+  .mercado-shopping-item-price {
+    @apply text-sm font-black text-slate-900 flex-shrink-0;
+  }
+
+  .mercado-shopping-total {
+    @apply flex items-center justify-between gap-3 px-3 py-3 sm:px-4 border-t border-slate-200 bg-slate-50;
+  }
+
+  .mercado-shopping-total-label {
+    @apply flex flex-col gap-0.5;
+  }
+
+  .mercado-shopping-total-label > .font-bold {
+    @apply text-xs uppercase tracking-wider text-slate-700;
+  }
+
+  .mercado-shopping-total-count {
+    @apply text-[10px] text-slate-500 font-medium;
+  }
+
+  .mercado-shopping-total-value {
+    @apply text-lg sm:text-xl font-black text-indigo-700;
+  }
+
+  .mercado-achievements-head {
+    @apply flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 mb-5 pb-4 border-b border-slate-100;
+  }
+
+  .mercado-achievements-title {
+    @apply text-lg font-black tracking-tight text-slate-900 flex items-center gap-2 font-display;
+  }
+
+  .mercado-achievements-subtitle {
+    @apply text-[11px] text-slate-500 font-medium mt-0.5;
+  }
+
+  .mercado-achievements-badge-pill {
+    @apply self-start text-[10px] font-bold text-indigo-700 bg-indigo-50 ring-1 ring-indigo-100 px-2.5 py-1 rounded-full whitespace-nowrap;
+  }
+
+  .mercado-achievements-grid {
+    @apply grid grid-cols-1 lg:grid-cols-12 gap-5;
+  }
+
+  .mercado-achievements-main {
+    @apply lg:col-span-7;
+  }
+
+  .mercado-profile-hero {
+    @apply relative rounded-2xl overflow-hidden border border-slate-800/80 shadow-lg;
+    background: linear-gradient(145deg, #0f172a 0%, #1e1b4b 45%, #0f172a 100%);
+  }
+
+  .mercado-profile-hero-glow {
+    @apply absolute -top-12 -right-8 w-40 h-40 rounded-full opacity-40 pointer-events-none;
+    background: radial-gradient(circle, #6366f1 0%, transparent 70%);
+  }
+
+  .mercado-profile-hero-inner {
+    @apply relative p-4 sm:p-5 space-y-4;
+  }
+
+  .mercado-profile-identity {
+    @apply flex items-center gap-3.5;
+  }
+
+  .mercado-level-ring {
+    @apply w-14 h-14 sm:w-16 sm:h-16 rounded-2xl flex items-center justify-center flex-shrink-0 shadow-lg;
+    background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 55%, #d97706 100%);
+    box-shadow:
+      0 0 0 2px rgb(251 191 36 / 0.35),
+      0 8px 24px -8px rgb(0 0 0 / 0.5);
+  }
+
+  .mercado-level-ring-value {
+    @apply text-sm sm:text-base font-black text-slate-950 tracking-tight;
+  }
+
+  .mercado-profile-name {
+    @apply text-sm sm:text-base font-extrabold text-white tracking-tight truncate;
+  }
+
+  .mercado-profile-meta {
+    @apply text-[10px] text-slate-400 mt-1 font-semibold flex items-center gap-1;
+  }
+
+  .mercado-xp-block {
+    @apply space-y-1.5;
+  }
+
+  .mercado-xp-labels {
+    @apply flex justify-between text-[10px] text-slate-400 font-bold;
+  }
+
+  .mercado-xp-track {
+    @apply w-full h-2 rounded-full overflow-hidden bg-slate-900/80 ring-1 ring-slate-700/60;
+  }
+
+  .mercado-xp-fill {
+    @apply h-full rounded-full transition-all duration-500;
+    background: linear-gradient(90deg, #6366f1 0%, #34d399 100%);
+  }
+
+  .mercado-profile-stats {
+    @apply grid grid-cols-3 gap-2 pt-4 border-t border-slate-700/50;
+  }
+
+  .mercado-stat-tile {
+    @apply text-center px-1;
+  }
+
+  .mercado-stat-label {
+    @apply text-[8px] text-slate-400 uppercase tracking-wider block font-bold mb-0.5;
+  }
+
+  .mercado-stat-value {
+    @apply text-sm sm:text-base font-black;
+  }
+
+  .mercado-stat-value--amber {
+    @apply text-amber-400;
+  }
+
+  .mercado-stat-value--emerald {
+    @apply text-emerald-400;
+  }
+
+  .mercado-stat-value--indigo {
+    @apply text-indigo-300;
+  }
+
+  .mercado-section-label {
+    @apply text-[10px] font-bold text-slate-600 uppercase tracking-wider mb-3;
+  }
+
+  .mercado-badge-grid {
+    @apply grid grid-cols-1 min-[420px]:grid-cols-2 gap-2.5;
+  }
+
+  .mercado-badge-card {
+    @apply flex gap-3 p-3 rounded-xl border transition-colors;
+  }
+
+  .mercado-badge-card.is-unlocked {
+    @apply border-emerald-200/90 bg-gradient-to-br from-emerald-50 to-white;
+  }
+
+  .mercado-badge-card.is-locked {
+    @apply border-slate-200 bg-slate-50/80 opacity-75;
+  }
+
+  .mercado-badge-icon-wrap {
+    @apply w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ring-1;
+  }
+
+  .mercado-badge-card.is-unlocked .mercado-badge-icon-wrap {
+    @apply bg-white text-emerald-700 ring-emerald-200 shadow-2xs;
+  }
+
+  .mercado-badge-card.is-locked .mercado-badge-icon-wrap {
+    @apply bg-slate-100 text-slate-400 ring-slate-200;
+  }
+
+  .mercado-badge-svg {
+    @apply w-5 h-5;
+  }
+
+  .mercado-badge-body {
+    @apply min-w-0 flex-1;
+  }
+
+  .mercado-badge-name {
+    @apply text-[11px] font-black text-slate-800 leading-tight;
+  }
+
+  .mercado-badge-desc {
+    @apply text-[9px] text-slate-500 mt-0.5 leading-snug;
+  }
+
+  .mercado-badge-status {
+    @apply text-[8px] text-emerald-700 font-bold uppercase mt-1.5 inline-block tracking-wide;
+  }
+
+  .mercado-badge-status--locked {
+    @apply text-slate-400;
+  }
+
+  .mercado-leaderboard {
+    @apply lg:col-span-5;
+  }
+
+  .mercado-leader-list {
+    @apply space-y-2;
+  }
+
+  .mercado-leader-row {
+    @apply flex items-center gap-3 p-2.5 rounded-xl border border-slate-200 bg-slate-50/80 transition-colors;
+  }
+
+  .mercado-leader-row.is-you {
+    @apply border-indigo-200 bg-indigo-50 ring-1 ring-indigo-100;
+  }
+
+  .mercado-leader-row.is-gold {
+    @apply border-amber-200/80 bg-gradient-to-r from-amber-50/90 to-white;
+  }
+
+  .mercado-leader-row.is-silver {
+    @apply border-slate-300/80 bg-gradient-to-r from-slate-100/90 to-white;
+  }
+
+  .mercado-leader-row.is-bronze {
+    @apply border-orange-200/80 bg-gradient-to-r from-orange-50/80 to-white;
+  }
+
+  .mercado-leader-rank {
+    @apply w-8 h-8 rounded-lg bg-slate-900 text-white text-xs font-black flex items-center justify-center flex-shrink-0;
+  }
+
+  .mercado-leader-row.is-gold .mercado-leader-rank,
+  .mercado-leader-row.is-silver .mercado-leader-rank,
+  .mercado-leader-row.is-bronze .mercado-leader-rank {
+    @apply bg-transparent text-lg;
+  }
+
+  .mercado-leader-info {
+    @apply flex-grow min-w-0;
+  }
+
+  .mercado-leader-name {
+    @apply text-xs font-extrabold text-slate-800 block truncate;
+  }
+
+  .mercado-leader-level {
+    @apply text-[10px] text-slate-500 font-medium;
+  }
+
+  .mercado-leader-points {
+    @apply text-xs font-black text-amber-600 flex-shrink-0;
+  }
+
+  .mercado-feed-votes {
+    @apply flex items-center gap-2;
+  }
+
+  .mercado-vote-btn {
+    @apply inline-flex items-center justify-center gap-1 min-w-[2.5rem] h-8 px-2.5 rounded-lg text-xs font-bold transition-colors touch-manipulation;
+  }
+
+  .mercado-vote-up {
+    @apply bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200 hover:bg-emerald-100 hover:ring-emerald-300;
+  }
+
+  .mercado-vote-up:disabled {
+    @apply opacity-50 cursor-not-allowed;
+  }
+
+  .mercado-vote-down {
+    @apply bg-rose-50 text-rose-700 ring-1 ring-rose-200 hover:bg-rose-100 hover:ring-rose-300;
+  }
+
+  .mercado-vote-down:disabled {
+    @apply opacity-50 cursor-not-allowed;
+  }
+
+  .mercado-vote-up.is-active {
+    @apply bg-emerald-600 text-white ring-emerald-700;
+  }
+
+  .mercado-vote-down.is-active {
+    @apply bg-rose-600 text-white ring-rose-700;
+  }
+
+  .mercado-vote-undo {
+    @apply text-[10px] font-bold text-slate-500 hover:text-slate-800 px-2 py-1 rounded-md touch-manipulation;
+  }
+
+  .mercado-feed-own-hint {
+    @apply text-[10px] font-medium text-slate-500;
+  }
+
+  .mercado-map {
+    @apply z-0 bg-slate-100;
+  }
+
+  .mercado-map .leaflet-container {
+    @apply h-full w-full rounded-xl font-sans;
+  }
+
+  .mercado-map-popup {
+    @apply text-xs text-slate-700 leading-snug;
   }
 }

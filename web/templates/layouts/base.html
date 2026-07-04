@@ -20,6 +20,7 @@
     <meta name="twitter:description" content="{{ template "description" . }}" />
     <meta name="twitter:image" content="{{ absURL .AppURL "/static/og.png" }}" />
     <link rel="stylesheet" href="/static/css/styles.css" />
+    {{ if .LoggedIn }}<link rel="stylesheet" href="/static/css/leaflet.css" />{{ end }}
     <link rel="manifest" href="/static/manifest.webmanifest" />
     <meta name="theme-color" content="#4f46e5" />
     <meta name="mobile-web-app-capable" content="yes" />
@@ -31,6 +32,8 @@
     <script src="/static/js/htmx.min.js" defer></script>
     <script src="/static/js/idiomorph-ext.min.js" defer></script>
     <script src="/static/js/cais.js" defer></script>
+    {{ if .LoggedIn }}<script src="/static/js/leaflet.js" defer></script>
+    <script src="/static/js/mercado-map.js" defer></script>{{ end }}
   </head>
   <body hx-ext="morph" class="font-sans antialiased text-slate-900 flex flex-col {{ if .LoggedIn }}min-h-screen bg-slate-50 justify-between{{ else }}cais-auth-screen{{ end }}">
     <div id="cais-toast-host" aria-live="polite">

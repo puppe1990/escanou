@@ -45,7 +45,7 @@ func setupTestApp(t *testing.T) *App {
 		Renderer:  renderer,
 		Store:     s,
 		StaticDir: filepath.Join(wd, "web", "static"),
-		Site:      meta.SiteFrom("mercado", ""),
+		Site:      meta.SiteFrom("Escanou", ""),
 		Catalog:   catalog,
 	})
 	if err != nil {
@@ -135,7 +135,7 @@ func TestApp_DevReload_availableInDevelopment(t *testing.T) {
 		Store:        s,
 		StaticDir:    staticDir,
 		TemplatesDir: templatesDir,
-		Site:         meta.SiteFrom("mercado", ""),
+		Site:         meta.SiteFrom("Escanou", ""),
 		Catalog:      catalog,
 	})
 	if err != nil {

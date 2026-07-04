@@ -218,6 +218,15 @@
     var xhr = evt.detail.xhr;
     if (!xhr) return;
     applyTriggerActions(xhr.getResponseHeader("HX-Trigger"));
+    if (window.MercadoMap && document.getElementById("mercado-map")) {
+      window.MercadoMap.init();
+    }
+  });
+
+  document.body.addEventListener("htmx:beforeSwap", function (evt) {
+    if (window.MercadoMap && document.getElementById("mercado-map")) {
+      window.MercadoMap.destroy();
+    }
   });
 
   document.body.addEventListener("click", function (evt) {

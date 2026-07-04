@@ -3,6 +3,8 @@ package store
 import (
 	"database/sql"
 	"fmt"
+
+	"github.com/puppe1990/cais/pkg/cais/session"
 )
 
 // SeedMercadoDemo inserts catalog data (supermarkets, badges, reference products).
@@ -24,8 +26,8 @@ func seedMercadoCatalog(db *sql.DB) error {
 	}
 	for _, p := range products {
 		if _, err := db.Exec(
-			`INSERT OR IGNORE INTO products (name, barcode, category) VALUES (?, ?, ?)`,
-			p.name, p.barcode, p.category,
+			`INSERT OR IGNORE INTO products (name, barcode, category, source) VALUES (?, ?, ?, ?)`,
+			p.name, p.barcode, p.category, "seed",
 		); err != nil {
 			return fmt.Errorf("seed product: %w", err)
 		}
@@ -36,13 +38,22 @@ func seedMercadoCatalog(db *sql.DB) error {
 	}{
 		{"Pão de Açúcar Paulista", "Av. Paulista, 2064", -23.5615, -46.6590},
 		{"Extra Penha", "Av. Penha de França, 569", -23.5420, -46.5450},
-		{"Carrefour Tatuapé", "R. Serra de Bragança, 629", -23.5405, -46.5755},
+		{"Carrefour Tatuapé", "R. Serra de Bragança, 629 — Tatuapé", -23.5405, -46.5755},
 		{"Assaí São Miguel", "Av. Nordestina, 4944", -23.4945, -46.4440},
+		{"Extra Belenzinho", "R. Oriente, 234 — Belenzinho", -23.5398, -46.5865},
+		{"Assaí Belém", "Av. Alcântara Machado, 664 — Belém", -23.5368, -46.5832},
+		{"Dia Belenzinho", "R. José Belenzinho, 289 — Belenzinho", -23.5442, -46.5948},
+		{"Atacadão Belenzinho", "Av. do Estado, 5533 — Brás", -23.5342, -46.5778},
+		{"Extra Tatuapé", "R. Serra de Bragança, 1555 — Tatuapé", -23.5492, -46.5418},
+		{"Assaí Tatuapé", "R. Maria Cândida, 1899 — Tatuapé", -23.5496, -46.5392},
+		{"Atacadão Tatuapé", "R. Maria Cândida, 1763 — Tatuapé", -23.5488, -46.5378},
 	}
 	for _, m := range markets {
-		if _, err := db.Exec(
-			`INSERT OR IGNORE INTO supermarkets (name, address, lat, lng) VALUES (?, ?, ?, ?)`,
-			m.name, m.address, m.lat, m.lng,
+		if _, err := db.Exec(`
+			INSERT INTO supermarkets (name, address, lat, lng)
+			SELECT ?, ?, ?, ?
+			WHERE NOT EXISTS (SELECT 1 FROM supermarkets WHERE name = ?)`,
+			m.name, m.address, m.lat, m.lng, m.name,
 		); err != nil {
 			return fmt.Errorf("seed supermarket: %w", err)
 		}
@@ -78,4 +89,48 @@ func seedMercadoDemoProfile(db *sql.DB) error {
 		demoUserID, "Demo", defaultCity,
 	)
 	return err
+}
+
+// SeedMercadoDemoFeedSample adds a community price report in development so demo
+// can practice voting without a second account.
+func (s *SQLiteStore) SeedMercadoDemoFeedSample() error {
+	db := s.db.Raw()
+	hash, err := session.HashPassword("password")
+	if err != nil {
+		return err
+	}
+	if _, err := db.Exec(
+		`INSERT OR IGNORE INTO users (email, password_hash) VALUES (?, ?)`,
+		"ana@example.com", hash,
+	); err != nil {
+		return fmt.Errorf("seed ana user: %w", err)
+	}
+	var anaID int64
+	if err := db.QueryRow(`SELECT id FROM users WHERE email = ?`, "ana@example.com").Scan(&anaID); err != nil {
+		return fmt.Errorf("find ana user: %w", err)
+	}
+	if _, err := db.Exec(
+		`INSERT OR IGNORE INTO user_profiles (user_id, display_name, points, city) VALUES (?, ?, ?, ?)`,
+		anaID, "Ana", 15, defaultCity,
+	); err != nil {
+		return fmt.Errorf("seed ana profile: %w", err)
+	}
+	var existing int
+	if err := db.QueryRow(`SELECT COUNT(*) FROM price_reports WHERE user_id = ?`, anaID).Scan(&existing); err != nil {
+		return err
+	}
+	if existing > 0 {
+		return nil
+	}
+	var productID, marketID int64
+	if err := db.QueryRow(`SELECT id FROM products WHERE barcode = ?`, "7896256801011").Scan(&productID); err != nil {
+		return fmt.Errorf("sample product: %w", err)
+	}
+	if err := db.QueryRow(`SELECT id FROM supermarkets WHERE name = ?`, "Pão de Açúcar Paulista").Scan(&marketID); err != nil {
+		return fmt.Errorf("sample supermarket: %w", err)
+	}
+	if _, err := s.CreatePriceReport(anaID, productID, marketID, 549); err != nil {
+		return fmt.Errorf("sample report: %w", err)
+	}
+	return nil
 }

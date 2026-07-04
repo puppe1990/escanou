@@ -1,6 +1,6 @@
 {
-  "name": "mercado",
-  "short_name": "mercado",
+  "name": "Escanou",
+  "short_name": "Escanou",
   "description": "Compare preços de supermercados — colaborativo",
   "start_url": "/",
   "display": "standalone",

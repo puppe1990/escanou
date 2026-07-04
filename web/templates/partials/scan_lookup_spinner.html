@@ -1,0 +1,15 @@
+{{- define "scan_lookup_spinner" -}}
+<div
+  id="scan-lookup-spinner"
+  class="htmx-indicator mercado-lookup-spinner"
+  role="status"
+  aria-live="polite"
+  aria-busy="true"
+>
+  <svg class="mercado-spinner-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+    <circle class="mercado-spinner-track" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="3" />
+    <path class="mercado-spinner-head" d="M12 2a10 10 0 0 1 10 10" stroke="currentColor" stroke-width="3" stroke-linecap="round" />
+  </svg>
+  <span class="mercado-lookup-spinner-text">Buscando produto…</span>
+</div>
+{{- end -}}

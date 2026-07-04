@@ -28,7 +28,7 @@ func setupTestStore(t *testing.T) store.Store {
 }
 
 func testSite() meta.Site {
-	return meta.Site{AppName: "mercado", AppURL: "https://example.com"}
+	return meta.Site{AppName: "Escanou", AppURL: "https://example.com"}
 }
 
 func testCatalog() *caisi18n.Catalog {

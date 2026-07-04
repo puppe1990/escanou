@@ -7,19 +7,25 @@ import (
 	"strings"
 	"time"
 
+	"github.com/puppe1990/cais/pkg/cais/barcode"
+
 	"github.com/puppe1990/mercado/internal/models"
 )
 
 const (
-	pointsPerReport   = 10
-	pointsPerConfirm  = 2
-	verifiedThreshold = 3
-	staleAfter        = 7 * 24 * time.Hour
-	defaultCity       = "São Paulo"
+	pointsPerReport      = 10
+	pointsPerConfirm     = 2
+	verifiedThreshold    = 3
+	DisputeFlagThreshold = 3
+	staleAfter           = 7 * 24 * time.Hour
+	defaultCity          = "São Paulo"
 )
 
 var ErrAlreadyConfirmed = errors.New("already confirmed")
-var ErrOwnReport = errors.New("cannot confirm own report")
+var ErrAlreadyDisputed = errors.New("already disputed")
+var ErrOppositeVote = errors.New("already voted the other way")
+var ErrNoVote = errors.New("no vote to undo")
+var ErrOwnReport = errors.New("cannot vote on own report")
 
 func levelFromPoints(points int) int {
 	return points/100 + 1
@@ -98,12 +104,32 @@ func (s *SQLiteStore) unlockBadgesForUser(userID int64) error {
 	return err
 }
 
+const productSelectCols = `id, name, barcode, category, brand, quantity, image_url, source, off_fetched_at, created_at`
+
+func scanProduct(sc interface {
+	Scan(dest ...any) error
+}) (models.Product, error) {
+	var p models.Product
+	var offFetched sql.NullTime
+	if err := sc.Scan(
+		&p.ID, &p.Name, &p.Barcode, &p.Category,
+		&p.Brand, &p.Quantity, &p.ImageURL, &p.Source, &offFetched, &p.CreatedAt,
+	); err != nil {
+		return models.Product{}, err
+	}
+	if offFetched.Valid {
+		t := offFetched.Time
+		p.OffFetchedAt = &t
+	}
+	return p, nil
+}
+
 func (s *SQLiteStore) ListProducts(limit int) ([]models.Product, error) {
 	if limit <= 0 {
 		limit = 20
 	}
 	rows, err := s.db.Query(
-		`SELECT id, name, barcode, category, created_at FROM products ORDER BY name LIMIT ?`,
+		`SELECT `+productSelectCols+` FROM products ORDER BY name LIMIT ?`,
 		limit,
 	)
 	if err != nil {
@@ -112,8 +138,8 @@ func (s *SQLiteStore) ListProducts(limit int) ([]models.Product, error) {
 	defer func() { _ = rows.Close() }()
 	var out []models.Product
 	for rows.Next() {
-		var p models.Product
-		if err := rows.Scan(&p.ID, &p.Name, &p.Barcode, &p.Category, &p.CreatedAt); err != nil {
+		p, err := scanProduct(rows)
+		if err != nil {
 			return nil, err
 		}
 		out = append(out, p)
@@ -123,11 +149,10 @@ func (s *SQLiteStore) ListProducts(limit int) ([]models.Product, error) {
 
 func (s *SQLiteStore) FindProductByBarcode(barcode string) (models.Product, bool, error) {
 	barcode = strings.TrimSpace(barcode)
-	var p models.Product
-	err := s.db.QueryRow(
-		`SELECT id, name, barcode, category, created_at FROM products WHERE barcode = ?`,
+	p, err := scanProduct(s.db.QueryRow(
+		`SELECT `+productSelectCols+` FROM products WHERE barcode = ?`,
 		barcode,
-	).Scan(&p.ID, &p.Name, &p.Barcode, &p.Category, &p.CreatedAt)
+	))
 	if errors.Is(err, sql.ErrNoRows) {
 		return models.Product{}, false, nil
 	}
@@ -139,13 +164,49 @@ func (s *SQLiteStore) FindProductByBarcode(barcode string) (models.Product, bool
 
 func (s *SQLiteStore) CreateProduct(name, barcode, category string) (int64, error) {
 	result, err := s.db.Exec(
-		`INSERT INTO products (name, barcode, category) VALUES (?, ?, ?)`,
+		`INSERT INTO products (name, barcode, category, source) VALUES (?, ?, ?, ?)`,
 		strings.TrimSpace(name), strings.TrimSpace(barcode), strings.TrimSpace(category),
+		models.ProductSourceManual,
 	)
 	if err != nil {
 		return 0, fmt.Errorf("create product: %w", err)
 	}
 	return result.LastInsertId()
+}
+
+func (s *SQLiteStore) CreateProductFromOFF(off barcode.Product) (models.Product, error) {
+	fetchedAt := time.Now().UTC()
+	result, err := s.db.Exec(
+		`INSERT INTO products (name, barcode, category, brand, quantity, image_url, source, off_fetched_at)
+		 VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+		strings.TrimSpace(off.Name),
+		strings.TrimSpace(off.Barcode),
+		strings.TrimSpace(off.Category),
+		strings.TrimSpace(off.Brand),
+		strings.TrimSpace(off.Quantity),
+		strings.TrimSpace(off.ImageURL),
+		models.ProductSourceOpenFoodFacts,
+		fetchedAt,
+	)
+	if err != nil {
+		return models.Product{}, fmt.Errorf("create product from off: %w", err)
+	}
+	id, err := result.LastInsertId()
+	if err != nil {
+		return models.Product{}, err
+	}
+	t := fetchedAt
+	return models.Product{
+		ID:           id,
+		Name:         off.Name,
+		Barcode:      off.Barcode,
+		Category:     off.Category,
+		Brand:        off.Brand,
+		Quantity:     off.Quantity,
+		ImageURL:     off.ImageURL,
+		Source:       models.ProductSourceOpenFoodFacts,
+		OffFetchedAt: &t,
+	}, nil
 }
 
 func (s *SQLiteStore) ProductAvgPriceCents(productID int64) (int, error) {
@@ -182,28 +243,32 @@ func (s *SQLiteStore) ListSupermarkets() ([]models.Supermarket, error) {
 	return out, rows.Err()
 }
 
-func (s *SQLiteStore) ListFeedReports(limit int) ([]models.PriceReport, error) {
+func (s *SQLiteStore) ListFeedReports(limit int, viewerUserID int64) ([]models.PriceReport, error) {
 	if limit <= 0 {
 		limit = 50
 	}
 	rows, err := s.db.Query(`
 		SELECT pr.id, pr.product_id, pr.supermarket_id, pr.user_id, pr.price_cents,
-		       pr.confirmations, pr.flagged, pr.created_at,
+		       pr.confirmations, COALESCE(pr.disputes, 0), pr.flagged, pr.created_at,
 		       p.name, sm.name,
-		       COALESCE(up.display_name, u.email), COALESCE(up.points, 0)
+		       COALESCE(up.display_name, u.email), COALESCE(up.points, 0),
+		       CASE WHEN pc.user_id IS NOT NULL THEN 1 ELSE 0 END,
+		       CASE WHEN pd.user_id IS NOT NULL THEN 1 ELSE 0 END
 		FROM price_reports pr
 		JOIN products p ON p.id = pr.product_id
 		JOIN supermarkets sm ON sm.id = pr.supermarket_id
 		JOIN users u ON u.id = pr.user_id
 		LEFT JOIN user_profiles up ON up.user_id = pr.user_id
+		LEFT JOIN price_confirmations pc ON pc.price_report_id = pr.id AND pc.user_id = ?
+		LEFT JOIN price_disputes pd ON pd.price_report_id = pr.id AND pd.user_id = ?
 		WHERE pr.flagged = 0
 		ORDER BY pr.created_at DESC
-		LIMIT ?`, limit)
+		LIMIT ?`, viewerUserID, viewerUserID, limit)
 	if err != nil {
 		return nil, fmt.Errorf("list feed: %w", err)
 	}
 	defer func() { _ = rows.Close() }()
-	return scanPriceReports(rows)
+	return scanFeedReports(rows)
 }
 
 func (s *SQLiteStore) ListUserReports(userID int64, limit int) ([]models.PriceReport, error) {
@@ -212,7 +277,7 @@ func (s *SQLiteStore) ListUserReports(userID int64, limit int) ([]models.PriceRe
 	}
 	rows, err := s.db.Query(`
 		SELECT pr.id, pr.product_id, pr.supermarket_id, pr.user_id, pr.price_cents,
-		       pr.confirmations, pr.flagged, pr.created_at,
+		       pr.confirmations, COALESCE(pr.disputes, 0), pr.flagged, pr.created_at,
 		       p.name, sm.name,
 		       COALESCE(up.display_name, u.email), COALESCE(up.points, 0)
 		FROM price_reports pr
@@ -233,21 +298,50 @@ func (s *SQLiteStore) ListUserReports(userID int64, limit int) ([]models.PriceRe
 func scanPriceReports(rows *sql.Rows) ([]models.PriceReport, error) {
 	var out []models.PriceReport
 	for rows.Next() {
-		var r models.PriceReport
-		var flagged int
-		var pts int
-		if err := rows.Scan(
-			&r.ID, &r.ProductID, &r.SupermarketID, &r.UserID, &r.PriceCents,
-			&r.Confirmations, &flagged, &r.CreatedAt,
-			&r.ProductName, &r.SupermarketName, &r.Contributor, &pts,
-		); err != nil {
+		r, err := scanPriceReportRow(rows, false)
+		if err != nil {
 			return nil, err
 		}
-		r.Flagged = flagged != 0
-		r.ContributorLvl = levelFromPoints(pts)
 		out = append(out, r)
 	}
 	return out, rows.Err()
+}
+
+func scanFeedReports(rows *sql.Rows) ([]models.PriceReport, error) {
+	var out []models.PriceReport
+	for rows.Next() {
+		r, err := scanPriceReportRow(rows, true)
+		if err != nil {
+			return nil, err
+		}
+		out = append(out, r)
+	}
+	return out, rows.Err()
+}
+
+func scanPriceReportRow(rows *sql.Rows, withViewerState bool) (models.PriceReport, error) {
+	var r models.PriceReport
+	var flagged int
+	var pts int
+	dest := []any{
+		&r.ID, &r.ProductID, &r.SupermarketID, &r.UserID, &r.PriceCents,
+		&r.Confirmations, &r.Disputes, &flagged, &r.CreatedAt,
+		&r.ProductName, &r.SupermarketName, &r.Contributor, &pts,
+	}
+	var viewerConfirmed, viewerDisputed int
+	if withViewerState {
+		dest = append(dest, &viewerConfirmed, &viewerDisputed)
+	}
+	if err := rows.Scan(dest...); err != nil {
+		return models.PriceReport{}, err
+	}
+	r.Flagged = flagged != 0
+	r.ContributorLvl = levelFromPoints(pts)
+	if withViewerState {
+		r.ViewerConfirmed = viewerConfirmed != 0
+		r.ViewerDisputed = viewerDisputed != 0
+	}
+	return r, nil
 }
 
 func (s *SQLiteStore) CreatePriceReport(userID, productID, supermarketID int64, priceCents int) (int64, error) {
@@ -277,6 +371,18 @@ func (s *SQLiteStore) ConfirmPriceReport(reportID, userID int64) (int, error) {
 	if ownerID == userID {
 		return 0, ErrOwnReport
 	}
+	var disputed int
+	if err := s.db.QueryRow(
+		`SELECT COUNT(*) FROM price_disputes WHERE price_report_id = ? AND user_id = ?`,
+		reportID, userID,
+	).Scan(&disputed); err != nil {
+		return 0, err
+	}
+	if disputed > 0 {
+		var count int
+		_ = s.db.QueryRow(`SELECT confirmations FROM price_reports WHERE id = ?`, reportID).Scan(&count)
+		return count, ErrOppositeVote
+	}
 	res, err := s.db.Exec(
 		`INSERT OR IGNORE INTO price_confirmations (price_report_id, user_id) VALUES (?, ?)`,
 		reportID, userID,
@@ -304,9 +410,118 @@ func (s *SQLiteStore) ConfirmPriceReport(reportID, userID int64) (int, error) {
 	return count, nil
 }
 
+func (s *SQLiteStore) DisputePriceReport(reportID, userID int64) (int, error) {
+	var ownerID int64
+	if err := s.db.QueryRow(`SELECT user_id FROM price_reports WHERE id = ?`, reportID).Scan(&ownerID); err != nil {
+		return 0, fmt.Errorf("find report: %w", err)
+	}
+	if ownerID == userID {
+		return 0, ErrOwnReport
+	}
+	var confirmed int
+	if err := s.db.QueryRow(
+		`SELECT COUNT(*) FROM price_confirmations WHERE price_report_id = ? AND user_id = ?`,
+		reportID, userID,
+	).Scan(&confirmed); err != nil {
+		return 0, err
+	}
+	if confirmed > 0 {
+		var count int
+		_ = s.db.QueryRow(`SELECT disputes FROM price_reports WHERE id = ?`, reportID).Scan(&count)
+		return count, ErrOppositeVote
+	}
+	res, err := s.db.Exec(
+		`INSERT OR IGNORE INTO price_disputes (price_report_id, user_id) VALUES (?, ?)`,
+		reportID, userID,
+	)
+	if err != nil {
+		return 0, fmt.Errorf("dispute: %w", err)
+	}
+	n, _ := res.RowsAffected()
+	if n == 0 {
+		var count int
+		_ = s.db.QueryRow(`SELECT disputes FROM price_reports WHERE id = ?`, reportID).Scan(&count)
+		return count, ErrAlreadyDisputed
+	}
+	_, err = s.db.Exec(`UPDATE price_reports SET disputes = disputes + 1 WHERE id = ?`, reportID)
+	if err != nil {
+		return 0, err
+	}
+	var count int
+	if err := s.db.QueryRow(`SELECT disputes FROM price_reports WHERE id = ?`, reportID).Scan(&count); err != nil {
+		return 0, err
+	}
+	if count >= DisputeFlagThreshold {
+		_ = s.FlagPriceReport(reportID)
+	}
+	return count, nil
+}
+
 func (s *SQLiteStore) FlagPriceReport(reportID int64) error {
 	_, err := s.db.Exec(`UPDATE price_reports SET flagged = 1 WHERE id = ?`, reportID)
 	return err
+}
+
+func (s *SQLiteStore) UnflagPriceReport(reportID int64) error {
+	_, err := s.db.Exec(`UPDATE price_reports SET flagged = 0 WHERE id = ?`, reportID)
+	return err
+}
+
+func (s *SQLiteStore) UndoPriceVote(reportID, userID int64) (int, int, error) {
+	res, err := s.db.Exec(
+		`DELETE FROM price_confirmations WHERE price_report_id = ? AND user_id = ?`,
+		reportID, userID,
+	)
+	if err != nil {
+		return 0, 0, fmt.Errorf("undo confirm: %w", err)
+	}
+	if n, _ := res.RowsAffected(); n > 0 {
+		_, err = s.db.Exec(
+			`UPDATE price_reports SET confirmations = confirmations - 1 WHERE id = ? AND confirmations > 0`,
+			reportID,
+		)
+		if err != nil {
+			return 0, 0, err
+		}
+		if err := s.addPoints(userID, -pointsPerConfirm); err != nil {
+			return 0, 0, err
+		}
+		return s.reportVoteCounts(reportID)
+	}
+
+	res, err = s.db.Exec(
+		`DELETE FROM price_disputes WHERE price_report_id = ? AND user_id = ?`,
+		reportID, userID,
+	)
+	if err != nil {
+		return 0, 0, fmt.Errorf("undo dispute: %w", err)
+	}
+	if n, _ := res.RowsAffected(); n > 0 {
+		_, err = s.db.Exec(
+			`UPDATE price_reports SET disputes = disputes - 1 WHERE id = ? AND disputes > 0`,
+			reportID,
+		)
+		if err != nil {
+			return 0, 0, err
+		}
+		confirms, disputes, err := s.reportVoteCounts(reportID)
+		if err != nil {
+			return 0, 0, err
+		}
+		if disputes < DisputeFlagThreshold {
+			_ = s.UnflagPriceReport(reportID)
+		}
+		return confirms, disputes, nil
+	}
+	return 0, 0, ErrNoVote
+}
+
+func (s *SQLiteStore) reportVoteCounts(reportID int64) (int, int, error) {
+	var confirms, disputes int
+	err := s.db.QueryRow(
+		`SELECT confirmations, disputes FROM price_reports WHERE id = ?`, reportID,
+	).Scan(&confirms, &disputes)
+	return confirms, disputes, err
 }
 
 func (s *SQLiteStore) ListBadges(userID int64) ([]models.Badge, error) {

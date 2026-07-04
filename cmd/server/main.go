@@ -39,7 +39,7 @@ func main() {
 		shiftedFrom = preferredPort
 	}
 	boot.Print(os.Stdout, boot.Options{
-		AppName:         "mercado",
+		AppName:         "Escanou",
 		Config:          cfg,
 		Version:         boot.CaisVersion(),
 		PortShiftedFrom: shiftedFrom,
@@ -84,7 +84,7 @@ func bootstrapWithConfig(cfg cais.Config) (*app.App, error) {
 		Store:        s,
 		StaticDir:    staticDir,
 		TemplatesDir: templatesDir,
-		Site:         meta.SiteFrom("mercado", cfg.AppURL),
+		Site:         meta.SiteFrom("Escanou", cfg.AppURL),
 		Catalog:      catalog,
 	})
 }
