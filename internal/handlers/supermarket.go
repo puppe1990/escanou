@@ -39,7 +39,8 @@ type SupermarketPageData struct {
 	LookupNeedsName bool
 	ReportProductID int64
 	SupermarketOpts []SupermarketOption
-	SubmissionCount int
+	SubmissionCount   int
+	ShoppingListTotal string
 }
 
 type SupermarketOption struct {
@@ -149,7 +150,7 @@ func (h *SupermarketHandler) Scan(w http.ResponseWriter, r *http.Request) {
 	data.ActiveNav = "scan"
 	data.SupermarketOpts = h.supermarketOptions()
 	if uid, ok := session.UserID(r); ok {
-		data.Scans = h.userScans(uid)
+		data.Scans, data.ShoppingListTotal = h.userShoppingList(uid)
 	}
 	httpx.RenderOrError(w, h.renderer, "base", "scan", data, h.cfg)
 }
@@ -340,7 +341,7 @@ func (h *SupermarketHandler) ReportPost(w http.ResponseWriter, r *http.Request) 
 	if cais.IsHTMX(r) {
 		data := h.base(r)
 		data.ActiveNav = "scan"
-		data.Scans = h.userScans(userID)
+		data.Scans, data.ShoppingListTotal = h.userShoppingList(userID)
 		httpx.RenderPageOrPartial(w, r, h.renderer, httpx.RenderOptions{
 			Partial: "scan_report_done",
 			Data:    data,
@@ -399,12 +400,24 @@ func (h *SupermarketHandler) feedScans() []PriceScanView {
 	return priceReportsToViews(reports)
 }
 
-func (h *SupermarketHandler) userScans(userID int64) []PriceScanView {
+func shoppingListTotalCents(prices []int) int {
+	total := 0
+	for _, p := range prices {
+		total += p
+	}
+	return total
+}
+
+func (h *SupermarketHandler) userShoppingList(userID int64) ([]PriceScanView, string) {
 	reports, err := h.store.ListUserReports(userID, 20)
 	if err != nil {
-		return nil
+		return nil, money.FormatBRL(0)
 	}
-	return priceReportsToViews(reports)
+	total := 0
+	for _, r := range reports {
+		total += r.PriceCents
+	}
+	return priceReportsToViews(reports), money.FormatBRL(total)
 }
 
 func priceReportsToViews(reports []models.PriceReport) []PriceScanView {

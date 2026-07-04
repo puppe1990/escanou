@@ -93,7 +93,7 @@ func TestSupermarketHandler_scan_emptyHistory(t *testing.T) {
 	if rr.Code != http.StatusOK {
 		t.Fatalf("status = %d", rr.Code)
 	}
-	if !strings.Contains(rr.Body.String(), "Nenhum preço registrado ainda") {
-		t.Error("scan page should show empty history message for user without reports")
+	if !strings.Contains(rr.Body.String(), "Sua lista está vazia") {
+		t.Error("scan page should show empty shopping list message for user without reports")
 	}
 }
