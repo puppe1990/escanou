@@ -101,3 +101,55 @@ func TestApp_Login_public(t *testing.T) {
 		t.Fatalf("GET /login status = %d, want 200", rr.Code)
 	}
 }
+
+func TestApp_DevReload_availableInDevelopment(t *testing.T) {
+	t.Helper()
+	wd, err := os.Getwd()
+	if err != nil {
+		t.Fatal(err)
+	}
+	for {
+		if _, err := os.Stat(filepath.Join(wd, "go.mod")); err == nil {
+			break
+		}
+		parent := filepath.Dir(wd)
+		if parent == wd {
+			t.Fatal("go.mod not found")
+		}
+		wd = parent
+	}
+	catalog := i18n.DefaultCatalog()
+	templatesDir := filepath.Join(wd, "web", "templates")
+	renderer, err := cais.NewRendererFromDir(templatesDir, catalog)
+	if err != nil {
+		t.Fatal(err)
+	}
+	s, err := store.NewSQLiteStore(":memory:", "development")
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() { _ = s.Close() })
+	staticDir := filepath.Join(wd, "web", "static")
+	a, err := New(cais.Config{Port: ":0", DBPath: ":memory:", Env: "development"}, Deps{
+		Renderer:     renderer,
+		Store:        s,
+		StaticDir:    staticDir,
+		TemplatesDir: templatesDir,
+		Site:         meta.SiteFrom("mercado", ""),
+		Catalog:      catalog,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	req := httptest.NewRequest(http.MethodGet, "/dev/reload", nil)
+	req.RemoteAddr = "127.0.0.1:12345"
+	rr := httptest.NewRecorder()
+	a.Handler().ServeHTTP(rr, req)
+	if rr.Code != http.StatusOK {
+		t.Fatalf("GET /dev/reload status = %d, want 200", rr.Code)
+	}
+	if rr.Body.Len() == 0 {
+		t.Fatal("expected reload stamp body")
+	}
+}

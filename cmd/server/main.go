@@ -80,11 +80,12 @@ func bootstrapWithConfig(cfg cais.Config) (*app.App, error) {
 	}
 
 	return app.New(cfg, app.Deps{
-		Renderer:  renderer,
-		Store:     s,
-		StaticDir: staticDir,
-		Site:      meta.SiteFrom("mercado", cfg.AppURL),
-		Catalog:   catalog,
+		Renderer:     renderer,
+		Store:        s,
+		StaticDir:    staticDir,
+		TemplatesDir: templatesDir,
+		Site:         meta.SiteFrom("mercado", cfg.AppURL),
+		Catalog:      catalog,
 	})
 }
 

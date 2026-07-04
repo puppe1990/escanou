@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"path/filepath"
 	"time"
 
 	"github.com/puppe1990/cais/pkg/cais"
@@ -14,15 +15,17 @@ import (
 	"github.com/puppe1990/cais/pkg/cais/meta"
 	"github.com/puppe1990/cais/pkg/cais/middleware"
 
+	"github.com/puppe1990/mercado/internal/devreload"
 	"github.com/puppe1990/mercado/internal/store"
 )
 
 type Deps struct {
-	Renderer  *cais.Renderer
-	Store     store.Store
-	StaticDir string
-	Site      meta.Site
-	Catalog   *i18n.Catalog
+	Renderer     *cais.Renderer
+	Store        store.Store
+	StaticDir    string
+	TemplatesDir string
+	Site         meta.Site
+	Catalog      *i18n.Catalog
 }
 
 type App struct {
@@ -64,6 +67,10 @@ func New(cfg cais.Config, deps Deps) (*App, error) {
 
 	registerRoutes(r, deps, cfg)
 	devlog.Register(r, cfg.Env, buf)
+	devreload.Register(r, cfg.Env, devreload.Paths{
+		TemplatesDir: deps.TemplatesDir,
+		CSSPath:      filepath.Join(deps.StaticDir, "css", "styles.css"),
+	}, time.Now().UnixNano())
 	r.Get("/health", healthHandler(deps.Store))
 
 	return &App{
