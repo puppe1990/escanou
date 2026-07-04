@@ -1,7 +1,7 @@
 /** @type {import('tailwindcss').Config} */
 module.exports = {
   content: ["./web/templates/**/*.html"],
-  safelist: ["pr-10", "inset-y-0"],
+  safelist: ["cais-password-wrap", "cais-password-toggle"],
   theme: {
     extend: {
       fontFamily: {
