@@ -18,6 +18,26 @@
     if (el) el.textContent = label;
   }
 
+  function barcodeFormats() {
+    if (typeof Html5QrcodeSupportedFormats === "undefined") return null;
+    const F = Html5QrcodeSupportedFormats;
+    return [F.EAN_13, F.EAN_8, F.UPC_A, F.UPC_E, F.CODE_128, F.ITF];
+  }
+
+  function scanConfig() {
+    return {
+      fps: 15,
+      qrbox: function (viewWidth, viewHeight) {
+        const width = Math.floor(Math.min(viewWidth * 0.88, 360));
+        const height = Math.floor(Math.min(viewHeight * 0.4, 180));
+        return { width: width, height: Math.max(height, 90) };
+      },
+      experimentalFeatures: {
+        useBarCodeDetectorIfSupported: true,
+      },
+    };
+  }
+
   function restoreLastSupermarket() {
     const saved = localStorage.getItem(LAST_MARKET_KEY);
     if (!saved) return;
@@ -61,15 +81,21 @@
     setStatus("Câmera pausada — toque para escanear de novo");
   }
 
-  async function requestCameraAccess() {
-    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-      throw new Error("Câmera não suportada neste navegador");
+  async function startWithCamera(config, onSuccess) {
+    try {
+      await scanner.start({ facingMode: "environment" }, config, onSuccess, () => {});
+      return;
+    } catch (err) {
+      console.warn("cais scan: environment camera failed", err);
     }
-    const stream = await navigator.mediaDevices.getUserMedia({
-      video: { facingMode: { ideal: "environment" } },
-      audio: false,
-    });
-    stream.getTracks().forEach((t) => t.stop());
+
+    const cameras = await Html5Qrcode.getCameras();
+    if (!cameras.length) {
+      throw new Error("Nenhuma câmera encontrada");
+    }
+    const back = cameras.find((c) => /back|rear|traseira|environment|wide/i.test(c.label || ""));
+    const pick = back || cameras[cameras.length - 1];
+    await scanner.start(pick.id, config, onSuccess, () => {});
   }
 
   async function startScanner() {
@@ -86,44 +112,31 @@
     }
 
     btn.disabled = true;
-    setStatus("Solicitando acesso à câmera…");
+    setStatus("Abrindo câmera…");
 
     try {
-      await requestCameraAccess();
-
       if (!scanner) {
-        scanner = new Html5Qrcode(SCANNER_ID);
+        const formats = barcodeFormats();
+        const opts = formats ? { formatsToSupport: formats } : {};
+        scanner = new Html5Qrcode(SCANNER_ID, opts);
       }
-
-      const config = { fps: 10, qrbox: { width: 250, height: 120 }, aspectRatio: 1.5 };
-      const cameras = await Html5Qrcode.getCameras();
-      if (!cameras.length) {
-        setStatus("Nenhuma câmera encontrada — use a busca manual");
-        return;
-      }
-
-      const back = cameras.find((c) => /back|rear|traseira|environment/i.test(c.label));
-      const cameraId = (back || cameras[cameras.length - 1]).id;
 
       let scanned = false;
-      await scanner.start(
-        cameraId,
-        config,
-        (decoded) => {
-          if (scanned) return;
-          scanned = true;
-          setStatus("Código lido — buscando produto…");
-          scanner
-            .stop()
-            .catch(() => {})
-            .finally(() => {
-              scanning = false;
-              setStartLabel("Abrir câmera");
-              submitBarcode(decoded);
-            });
-        },
-        () => {}
-      );
+      const onSuccess = (decoded) => {
+        if (scanned) return;
+        scanned = true;
+        setStatus("Código lido — buscando produto…");
+        scanner
+          .stop()
+          .catch(() => {})
+          .finally(() => {
+            scanning = false;
+            setStartLabel("Abrir câmera");
+            submitBarcode(decoded);
+          });
+      };
+
+      await startWithCamera(scanConfig(), onSuccess);
 
       scanning = true;
       setStartLabel("Parar câmera");
