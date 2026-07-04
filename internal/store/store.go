@@ -10,6 +10,7 @@ import (
 
 	_ "modernc.org/sqlite"
 
+	"github.com/puppe1990/cais/pkg/cais/barcode"
 	"github.com/puppe1990/cais/pkg/cais/devlog"
 	"github.com/puppe1990/cais/pkg/cais/session"
 	caissqlite "github.com/puppe1990/cais/pkg/cais/sqlite"
@@ -35,6 +36,7 @@ type Store interface {
 	ListProducts(limit int) ([]models.Product, error)
 	FindProductByBarcode(barcode string) (models.Product, bool, error)
 	CreateProduct(name, barcode, category string) (int64, error)
+	CreateProductFromOFF(off barcode.Product) (models.Product, error)
 	ProductAvgPriceCents(productID int64) (int, error)
 	ListSupermarkets() ([]models.Supermarket, error)
 	ListFeedReports(limit int) ([]models.PriceReport, error)

@@ -24,8 +24,8 @@ func seedMercadoCatalog(db *sql.DB) error {
 	}
 	for _, p := range products {
 		if _, err := db.Exec(
-			`INSERT OR IGNORE INTO products (name, barcode, category) VALUES (?, ?, ?)`,
-			p.name, p.barcode, p.category,
+			`INSERT OR IGNORE INTO products (name, barcode, category, source) VALUES (?, ?, ?, ?)`,
+			p.name, p.barcode, p.category, "seed",
 		); err != nil {
 			return fmt.Errorf("seed product: %w", err)
 		}

@@ -7,6 +7,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/puppe1990/cais/pkg/cais/barcode"
+
 	"github.com/puppe1990/mercado/internal/models"
 )
 
@@ -98,12 +100,32 @@ func (s *SQLiteStore) unlockBadgesForUser(userID int64) error {
 	return err
 }
 
+const productSelectCols = `id, name, barcode, category, brand, quantity, image_url, source, off_fetched_at, created_at`
+
+func scanProduct(sc interface {
+	Scan(dest ...any) error
+}) (models.Product, error) {
+	var p models.Product
+	var offFetched sql.NullTime
+	if err := sc.Scan(
+		&p.ID, &p.Name, &p.Barcode, &p.Category,
+		&p.Brand, &p.Quantity, &p.ImageURL, &p.Source, &offFetched, &p.CreatedAt,
+	); err != nil {
+		return models.Product{}, err
+	}
+	if offFetched.Valid {
+		t := offFetched.Time
+		p.OffFetchedAt = &t
+	}
+	return p, nil
+}
+
 func (s *SQLiteStore) ListProducts(limit int) ([]models.Product, error) {
 	if limit <= 0 {
 		limit = 20
 	}
 	rows, err := s.db.Query(
-		`SELECT id, name, barcode, category, created_at FROM products ORDER BY name LIMIT ?`,
+		`SELECT `+productSelectCols+` FROM products ORDER BY name LIMIT ?`,
 		limit,
 	)
 	if err != nil {
@@ -112,8 +134,8 @@ func (s *SQLiteStore) ListProducts(limit int) ([]models.Product, error) {
 	defer func() { _ = rows.Close() }()
 	var out []models.Product
 	for rows.Next() {
-		var p models.Product
-		if err := rows.Scan(&p.ID, &p.Name, &p.Barcode, &p.Category, &p.CreatedAt); err != nil {
+		p, err := scanProduct(rows)
+		if err != nil {
 			return nil, err
 		}
 		out = append(out, p)
@@ -123,11 +145,10 @@ func (s *SQLiteStore) ListProducts(limit int) ([]models.Product, error) {
 
 func (s *SQLiteStore) FindProductByBarcode(barcode string) (models.Product, bool, error) {
 	barcode = strings.TrimSpace(barcode)
-	var p models.Product
-	err := s.db.QueryRow(
-		`SELECT id, name, barcode, category, created_at FROM products WHERE barcode = ?`,
+	p, err := scanProduct(s.db.QueryRow(
+		`SELECT `+productSelectCols+` FROM products WHERE barcode = ?`,
 		barcode,
-	).Scan(&p.ID, &p.Name, &p.Barcode, &p.Category, &p.CreatedAt)
+	))
 	if errors.Is(err, sql.ErrNoRows) {
 		return models.Product{}, false, nil
 	}
@@ -139,13 +160,49 @@ func (s *SQLiteStore) FindProductByBarcode(barcode string) (models.Product, bool
 
 func (s *SQLiteStore) CreateProduct(name, barcode, category string) (int64, error) {
 	result, err := s.db.Exec(
-		`INSERT INTO products (name, barcode, category) VALUES (?, ?, ?)`,
+		`INSERT INTO products (name, barcode, category, source) VALUES (?, ?, ?, ?)`,
 		strings.TrimSpace(name), strings.TrimSpace(barcode), strings.TrimSpace(category),
+		models.ProductSourceManual,
 	)
 	if err != nil {
 		return 0, fmt.Errorf("create product: %w", err)
 	}
 	return result.LastInsertId()
+}
+
+func (s *SQLiteStore) CreateProductFromOFF(off barcode.Product) (models.Product, error) {
+	fetchedAt := time.Now().UTC()
+	result, err := s.db.Exec(
+		`INSERT INTO products (name, barcode, category, brand, quantity, image_url, source, off_fetched_at)
+		 VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+		strings.TrimSpace(off.Name),
+		strings.TrimSpace(off.Barcode),
+		strings.TrimSpace(off.Category),
+		strings.TrimSpace(off.Brand),
+		strings.TrimSpace(off.Quantity),
+		strings.TrimSpace(off.ImageURL),
+		models.ProductSourceOpenFoodFacts,
+		fetchedAt,
+	)
+	if err != nil {
+		return models.Product{}, fmt.Errorf("create product from off: %w", err)
+	}
+	id, err := result.LastInsertId()
+	if err != nil {
+		return models.Product{}, err
+	}
+	t := fetchedAt
+	return models.Product{
+		ID:           id,
+		Name:         off.Name,
+		Barcode:      off.Barcode,
+		Category:     off.Category,
+		Brand:        off.Brand,
+		Quantity:     off.Quantity,
+		ImageURL:     off.ImageURL,
+		Source:       models.ProductSourceOpenFoodFacts,
+		OffFetchedAt: &t,
+	}, nil
 }
 
 func (s *SQLiteStore) ProductAvgPriceCents(productID int64) (int, error) {

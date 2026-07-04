@@ -47,7 +47,10 @@ func TestSupermarket_LookupPost_unknownBarcode_usesOFF(t *testing.T) {
 			"status": 1,
 			"product": {
 				"product_name": "Produto OFF Teste",
-				"categories": "Mercearia"
+				"categories": "Mercearia",
+				"brands": "Marca Teste",
+				"quantity": "500 g",
+				"image_front_url": "https://images.openfoodfacts.org/test.jpg"
 			}
 		}`))
 	}))
@@ -72,11 +75,23 @@ func TestSupermarket_LookupPost_unknownBarcode_usesOFF(t *testing.T) {
 	if !strings.Contains(rr.Body.String(), "Produto OFF Teste") {
 		t.Errorf("body missing OFF product: %s", rr.Body.String())
 	}
-	_, found, err := s.FindProductByBarcode("5901234123457")
+	product, found, err := s.FindProductByBarcode("5901234123457")
 	if err != nil {
 		t.Fatal(err)
 	}
 	if !found {
 		t.Error("product should be persisted after OFF lookup")
+	}
+	if product.Brand != "Marca Teste" {
+		t.Errorf("Brand = %q, want Marca Teste", product.Brand)
+	}
+	if product.ImageURL != "https://images.openfoodfacts.org/test.jpg" {
+		t.Errorf("ImageURL = %q", product.ImageURL)
+	}
+	if product.Source != "openfoodfacts" {
+		t.Errorf("Source = %q, want openfoodfacts", product.Source)
+	}
+	if product.OffFetchedAt == nil {
+		t.Error("OffFetchedAt should be set after OFF lookup")
 	}
 }

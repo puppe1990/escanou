@@ -74,6 +74,10 @@ type ProductView struct {
 	Name     string
 	Barcode  string
 	Category string
+	Brand    string
+	Quantity string
+	ImageURL string
+	Source   string
 	AvgPrice string
 }
 
@@ -251,14 +255,11 @@ func (h *SupermarketHandler) LookupPost(w http.ResponseWriter, r *http.Request) 
 		if name == "" {
 			off, ok, err := h.barcode.Lookup(r.Context(), ean)
 			if err == nil && ok {
-				name = off.Name
-				category := off.Category
-				id, err := h.store.CreateProduct(name, ean, category)
+				product, err = h.store.CreateProductFromOFF(off)
 				if err != nil {
 					http.Error(w, "create product failed", http.StatusInternalServerError)
 					return
 				}
-				product = models.Product{ID: id, Name: name, Barcode: ean, Category: category}
 				found = true
 			}
 		}
@@ -433,7 +434,9 @@ func (h *SupermarketHandler) productView(p models.Product) ProductView {
 		avgStr = money.FormatBRL(avg)
 	}
 	return ProductView{
-		ID: p.ID, Name: p.Name, Barcode: p.Barcode, Category: p.Category, AvgPrice: avgStr,
+		ID: p.ID, Name: p.Name, Barcode: p.Barcode, Category: p.Category,
+		Brand: p.Brand, Quantity: p.Quantity, ImageURL: p.ImageURL, Source: p.Source,
+		AvgPrice: avgStr,
 	}
 }
 
