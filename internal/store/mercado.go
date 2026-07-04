@@ -13,12 +13,12 @@ import (
 )
 
 const (
-	pointsPerReport   = 10
-	pointsPerConfirm  = 2
-	verifiedThreshold     = 3
-	DisputeFlagThreshold  = 3
-	staleAfter        = 7 * 24 * time.Hour
-	defaultCity       = "São Paulo"
+	pointsPerReport      = 10
+	pointsPerConfirm     = 2
+	verifiedThreshold    = 3
+	DisputeFlagThreshold = 3
+	staleAfter           = 7 * 24 * time.Hour
+	defaultCity          = "São Paulo"
 )
 
 var ErrAlreadyConfirmed = errors.New("already confirmed")
