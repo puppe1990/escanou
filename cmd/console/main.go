@@ -5,6 +5,7 @@ import (
 
 	"github.com/puppe1990/cais/pkg/cais"
 	"github.com/puppe1990/cais/pkg/cais/console"
+
 	"github.com/puppe1990/mercado/internal/store"
 )
 
@@ -25,10 +26,9 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	defer func() { _ = s.Close() }()
 
 	active := s
-	if err := console.Run(console.Options{
+	err = console.Run(console.Options{
 		AppName:  "mercado",
 		Config:   cfg,
 		Bindings: bindings(active),
@@ -41,7 +41,9 @@ func main() {
 			active = next
 			return bindings(active), nil
 		},
-	}); err != nil {
+	})
+	_ = active.Close()
+	if err != nil {
 		log.Fatal(err)
 	}
 }

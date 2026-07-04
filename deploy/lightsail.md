@@ -114,9 +114,9 @@ Ou rode um segundo serviço no compose apontando para o mesmo volume de dados.
 
 ## Troubleshooting
 
-| Sintoma | Correção |
-|--------|----------|
-| Câmera bloqueada | `PERMISSIONS_POLICY=camera=(self)` + HTTPS |
-| Scanner não inicia | `CSP_MEDIA_SRC=blob:` no `.env` |
+| Sintoma                           | Correção                                          |
+| --------------------------------- | ------------------------------------------------- |
+| Câmera bloqueada                  | `PERMISSIONS_POLICY=camera=(self)` + HTTPS        |
+| Scanner não inicia                | `CSP_MEDIA_SRC=blob:` no `.env`                   |
 | Produto desconhecido não cadastra | `CSP_CONNECT_SRC=https://world.openfoodfacts.org` |
-| IP errado nos logs/rate limit | `TRUSTED_PROXIES` com IP do proxy |
+| IP errado nos logs/rate limit     | `TRUSTED_PROXIES` com IP do proxy                 |

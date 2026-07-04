@@ -10,6 +10,7 @@ import (
 	"github.com/puppe1990/cais/pkg/cais"
 	"github.com/puppe1990/cais/pkg/cais/boot"
 	"github.com/puppe1990/cais/pkg/cais/meta"
+
 	"github.com/puppe1990/mercado/internal/app"
 	appi18n "github.com/puppe1990/mercado/internal/i18n"
 	"github.com/puppe1990/mercado/internal/store"
@@ -46,10 +47,6 @@ func main() {
 	if err := a.Run(); err != nil {
 		log.Fatal(err)
 	}
-}
-
-func bootstrap() (*app.App, error) {
-	return bootstrapWithConfig(cais.Load())
 }
 
 func bootstrapWithConfig(cfg cais.Config) (*app.App, error) {

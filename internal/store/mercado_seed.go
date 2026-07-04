@@ -29,7 +29,10 @@ func seedMercadoCatalog(db *sql.DB) error {
 			return fmt.Errorf("seed product: %w", err)
 		}
 	}
-	markets := []struct{ name, address string; lat, lng float64 }{
+	markets := []struct {
+		name, address string
+		lat, lng      float64
+	}{
 		{"Angeloni Bacacheri", "R. Imaculada Conceição, 830", -25.4284, -49.2733},
 		{"Bistek Hauer", "Av. Presidente Kennedy, 2455", -25.4500, -49.2900},
 		{"Carrefour Portão", "Av. República Argentina, 1330", -25.4700, -49.3000},
@@ -43,7 +46,10 @@ func seedMercadoCatalog(db *sql.DB) error {
 			return fmt.Errorf("seed supermarket: %w", err)
 		}
 	}
-	badges := []struct{ slug, name, desc, icon string; min int }{
+	badges := []struct {
+		slug, name, desc, icon string
+		min                    int
+	}{
 		{"first_scan", "Primeiro Registro", "Registrou seu primeiro preço", "camera", 10},
 		{"fiscal", "Fiscal do Povo", "10+ contribuições", "shield", 100},
 		{"verifier", "Verificador Oficial", "Confirmou 3+ preços", "check", 6},

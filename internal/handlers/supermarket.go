@@ -14,21 +14,22 @@ import (
 	"github.com/puppe1990/cais/pkg/cais/middleware"
 	"github.com/puppe1990/cais/pkg/cais/money"
 	"github.com/puppe1990/cais/pkg/cais/session"
+
 	"github.com/puppe1990/mercado/internal/models"
 	"github.com/puppe1990/mercado/internal/store"
 )
 
 type SupermarketPageData struct {
 	meta.Site
-	Scans            []PriceScanView
-	Markets          []MarketView
-	Products         []ProductView
-	Badges           []BadgeView
-	Leaders          []LeaderView
-	LookupProduct    *ProductView
-	LookupError      string
-	ReportProductID  int64
-	SupermarketOpts  []SupermarketOption
+	Scans           []PriceScanView
+	Markets         []MarketView
+	Products        []ProductView
+	Badges          []BadgeView
+	Leaders         []LeaderView
+	LookupProduct   *ProductView
+	LookupError     string
+	ReportProductID int64
+	SupermarketOpts []SupermarketOption
 	SubmissionCount int
 }
 
@@ -397,7 +398,7 @@ func (h *SupermarketHandler) marketViews() []MarketView {
 		out = append(out, MarketView{
 			Name: m.Name, Address: m.Address,
 			Distance: fmt.Sprintf("%.1f km", float64(i+1)*1.2),
-			Offers: offers, BestDeal: best,
+			Offers:   offers, BestDeal: best,
 		})
 	}
 	return out

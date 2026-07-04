@@ -108,7 +108,7 @@ func (s *SQLiteStore) ListProducts(limit int) ([]models.Product, error) {
 	if err != nil {
 		return nil, fmt.Errorf("list products: %w", err)
 	}
-	defer rows.Close()
+	defer func() { _ = rows.Close() }()
 	var out []models.Product
 	for rows.Next() {
 		var p models.Product
@@ -169,7 +169,7 @@ func (s *SQLiteStore) ListSupermarkets() ([]models.Supermarket, error) {
 	if err != nil {
 		return nil, fmt.Errorf("list supermarkets: %w", err)
 	}
-	defer rows.Close()
+	defer func() { _ = rows.Close() }()
 	var out []models.Supermarket
 	for rows.Next() {
 		var m models.Supermarket
@@ -201,7 +201,7 @@ func (s *SQLiteStore) ListFeedReports(limit int) ([]models.PriceReport, error) {
 	if err != nil {
 		return nil, fmt.Errorf("list feed: %w", err)
 	}
-	defer rows.Close()
+	defer func() { _ = rows.Close() }()
 	return scanPriceReports(rows)
 }
 
@@ -225,7 +225,7 @@ func (s *SQLiteStore) ListUserReports(userID int64, limit int) ([]models.PriceRe
 	if err != nil {
 		return nil, fmt.Errorf("list user reports: %w", err)
 	}
-	defer rows.Close()
+	defer func() { _ = rows.Close() }()
 	return scanPriceReports(rows)
 }
 
@@ -318,7 +318,7 @@ func (s *SQLiteStore) ListBadges(userID int64) ([]models.Badge, error) {
 	if err != nil {
 		return nil, fmt.Errorf("list badges: %w", err)
 	}
-	defer rows.Close()
+	defer func() { _ = rows.Close() }()
 	var out []models.Badge
 	for rows.Next() {
 		var b models.Badge
@@ -346,7 +346,7 @@ func (s *SQLiteStore) Leaderboard(limit int, currentUserID int64) ([]models.Lead
 	if err != nil {
 		return nil, fmt.Errorf("leaderboard: %w", err)
 	}
-	defer rows.Close()
+	defer func() { _ = rows.Close() }()
 	var out []models.LeaderboardEntry
 	for rows.Next() {
 		var e models.LeaderboardEntry
