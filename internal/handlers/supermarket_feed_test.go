@@ -10,12 +10,52 @@ import (
 	"github.com/puppe1990/cais/pkg/cais/session"
 )
 
+func TestSupermarketHandler_feed_ownReport_showsVoteHint(t *testing.T) {
+	s := setupTestStore(t)
+	if err := s.SeedMercadoDemo(); err != nil {
+		t.Fatal(err)
+	}
+	userID, err := s.CreateUser("owner-feed@test.com", "hash")
+	if err != nil {
+		t.Fatal(err)
+	}
+	pid, err := s.CreateProduct("Iogurte", "9998887776665", "Laticínios")
+	if err != nil {
+		t.Fatal(err)
+	}
+	markets, _ := s.ListSupermarkets()
+	if _, err := s.CreatePriceReport(userID, pid, markets[0].ID, 450); err != nil {
+		t.Fatal(err)
+	}
+
+	h := NewSupermarketHandler(setupTestRenderer(t), s, testSite(), cais.Config{Env: "development"})
+	req := httptest.NewRequest(http.MethodGet, "/feed", nil)
+	req = session.WithUserID(req, userID)
+	rr := httptest.NewRecorder()
+	h.Feed(rr, req)
+
+	if rr.Code != http.StatusOK {
+		t.Fatalf("status = %d", rr.Code)
+	}
+	body := rr.Body.String()
+	if !strings.Contains(body, "Seu registro") {
+		t.Error("own report should explain that only others can vote")
+	}
+	if strings.Contains(body, `hx-post="/feed/`) {
+		t.Error("own report should not render vote POST buttons")
+	}
+}
+
 func TestSupermarketHandler_feed_voteButtons(t *testing.T) {
 	s := setupTestStore(t)
 	if err := s.SeedMercadoDemo(); err != nil {
 		t.Fatal(err)
 	}
-	userID, err := s.CreateUser("feed-vote@test.com", "hash")
+	ownerID, err := s.CreateUser("feed-owner@test.com", "hash")
+	if err != nil {
+		t.Fatal(err)
+	}
+	voterID, err := s.CreateUser("feed-voter@test.com", "hash2")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -27,13 +67,13 @@ func TestSupermarketHandler_feed_voteButtons(t *testing.T) {
 	if len(markets) == 0 {
 		t.Fatal("need supermarkets")
 	}
-	if _, err := s.CreatePriceReport(userID, pid, markets[0].ID, 600); err != nil {
+	if _, err := s.CreatePriceReport(ownerID, pid, markets[0].ID, 600); err != nil {
 		t.Fatal(err)
 	}
 	h := NewSupermarketHandler(setupTestRenderer(t), s, testSite(), cais.Config{Env: "development"})
 
 	req := httptest.NewRequest(http.MethodGet, "/feed", nil)
-	req = session.WithUserID(req, 1)
+	req = session.WithUserID(req, voterID)
 	rr := httptest.NewRecorder()
 	h.Feed(rr, req)
 

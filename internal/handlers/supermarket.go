@@ -60,6 +60,7 @@ type PriceScanView struct {
 	DisputeCount    int
 	ConfirmDisabled bool
 	DisputeDisabled bool
+	OwnReport       bool
 	Verified        bool
 	Outdated        bool
 	Flagged         bool
@@ -366,6 +367,7 @@ func (h *SupermarketHandler) ConfirmPost(w http.ResponseWriter, r *http.Request,
 		h.renderFeedVotes(w, feedVoteData{
 			ID: int(reportID), ConfirmedCount: count, DisputeCount: disputeCount,
 			ConfirmDisabled: true, DisputeDisabled: h.viewerDisputed(reportID, userID),
+			OwnReport: err == store.ErrOwnReport,
 		})
 		return
 	}
@@ -392,6 +394,7 @@ func (h *SupermarketHandler) FlagPost(w http.ResponseWriter, r *http.Request, re
 			ID: int(reportID), ConfirmedCount: confirmCount, DisputeCount: count,
 			ConfirmDisabled: h.viewerConfirmed(reportID, userID),
 			DisputeDisabled: true,
+			OwnReport: err == store.ErrOwnReport,
 		})
 		return
 	}
@@ -419,6 +422,7 @@ type feedVoteData struct {
 	DisputeCount    int
 	ConfirmDisabled bool
 	DisputeDisabled bool
+	OwnReport       bool
 }
 
 func (h *SupermarketHandler) renderFeedVotes(w http.ResponseWriter, data feedVoteData) {
@@ -510,6 +514,7 @@ func priceReportsToViews(reports []models.PriceReport, viewerID int64) []PriceSc
 			DisputeCount:    r.Disputes,
 			ConfirmDisabled: r.ViewerConfirmed || r.UserID == viewerID,
 			DisputeDisabled: r.ViewerDisputed || r.UserID == viewerID,
+			OwnReport:       r.UserID == viewerID,
 			Verified:        store.ReportVerified(r.Confirmations),
 			Outdated:        store.ReportOutdated(r.CreatedAt),
 			Flagged:         r.Flagged,

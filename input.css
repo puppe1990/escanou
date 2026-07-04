@@ -511,4 +511,12 @@
   .mercado-vote-down {
     @apply bg-rose-50 text-rose-700 ring-1 ring-rose-200 hover:bg-rose-100 hover:ring-rose-300;
   }
+
+  .mercado-vote-down:disabled {
+    @apply opacity-50 cursor-not-allowed;
+  }
+
+  .mercado-feed-own-hint {
+    @apply text-[10px] font-medium text-slate-500;
+  }
 }

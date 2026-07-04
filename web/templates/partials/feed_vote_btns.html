@@ -1,4 +1,7 @@
 {{ define "feed_vote_btns" }}
+{{ if .OwnReport }}
+<p class="mercado-feed-own-hint">Seu registro — só outros usuários podem confirmar ou contestar</p>
+{{ else }}
 <div id="feed-votes-{{ .ID }}" class="mercado-feed-votes">
   <button
     type="button"
@@ -21,4 +24,5 @@
     <span class="font-mono">{{ .DisputeCount }}</span>
   </button>
 </div>
+{{ end }}
 {{ end }}
