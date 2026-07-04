@@ -1,4 +1,4 @@
-.PHONY: dev build test css css-watch lint format format-check pre-commit-install ci
+.PHONY: dev stop build test css css-watch lint format format-check pre-commit-install ci
 
 CAIS := $(shell command -v cais 2>/dev/null || command -v $(HOME)/go/bin/cais 2>/dev/null)
 
@@ -32,6 +32,10 @@ css-watch:
 build: css
 	CGO_ENABLED=0 go build -ldflags="-s -w" -o $(BIN) ./cmd/server
 
-dev: css
-	$(MAKE) css-watch &
-	$(CAIS) dev
+dev:
+	@chmod +x scripts/dev.sh scripts/stop.sh
+	./scripts/dev.sh
+
+stop:
+	@chmod +x scripts/stop.sh
+	./scripts/stop.sh
