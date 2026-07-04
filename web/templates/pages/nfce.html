@@ -1,7 +1,5 @@
 {{ define "title" }}Importar NFC-e — Waze de Supermercados{{ end }} {{ define "content" }}
-<div
-  class="w-full max-w-4xl mx-auto p-4 md:p-5 bg-white rounded-xl border border-slate-200 shadow-2xs"
->
+<div class="mercado-page-card">
   <div class="mb-4 pb-4 border-b border-slate-100">
     <h2
       class="text-lg font-black tracking-tight text-slate-900 flex items-center gap-2 font-display"
@@ -37,10 +35,12 @@
         >Chave de Acesso (44 dígitos)</label
       >
       <input
-        class="w-full border border-slate-300 rounded-lg px-3 py-2.5 text-sm font-mono tracking-wider"
+        class="w-full border border-slate-300 rounded-lg px-3 py-2.5 text-xs sm:text-sm font-mono tracking-wide sm:tracking-wider"
         type="text"
         id="nfce_key"
-        placeholder="4126 0700 0000 0000 0000 0000 0000 0000 0000 0000 0000"
+        inputmode="numeric"
+        autocomplete="off"
+        placeholder="Chave NFC-e (44 dígitos)"
         maxlength="54"
       />
     </div>

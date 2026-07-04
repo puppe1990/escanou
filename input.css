@@ -19,6 +19,19 @@
     -ms-overflow-style: none;
     scrollbar-width: none;
   }
+
+  .safe-top {
+    padding-top: env(safe-area-inset-top, 0px);
+  }
+
+  .safe-bottom {
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+
+  .safe-x {
+    padding-left: env(safe-area-inset-left, 0px);
+    padding-right: env(safe-area-inset-right, 0px);
+  }
 }
 
 @layer components {
@@ -75,5 +88,30 @@
 
   .cais-auth-screen {
     @apply min-h-screen bg-gradient-to-br from-indigo-50 via-white to-violet-100;
+  }
+
+  .mercado-chrome {
+    @apply sticky top-0 z-40 bg-white border-b border-slate-200 shadow-xs safe-top;
+  }
+
+  .mercado-nav-scroll {
+    @apply flex gap-1 py-2 overflow-x-auto no-scrollbar scroll-px-3 sm:scroll-px-4 snap-x snap-mandatory flex-1 min-w-0;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .mercado-nav-tab {
+    @apply px-2.5 sm:px-3 py-2 sm:py-1.5 rounded-lg text-[10px] sm:text-xs font-bold transition-all flex flex-col sm:flex-row items-center gap-0.5 sm:gap-1.5 flex-shrink-0 text-slate-600 hover:text-slate-900 hover:bg-slate-100 touch-manipulation;
+  }
+
+  .mercado-nav-tab.is-active {
+    @apply bg-slate-900 text-white shadow-2xs hover:bg-slate-900 hover:text-white;
+  }
+
+  .mercado-stat-card {
+    @apply flex items-center justify-between sm:justify-start gap-3 sm:gap-4 p-2.5 sm:p-2 bg-slate-50 border border-slate-200 rounded-xl w-full sm:w-auto;
+  }
+
+  .mercado-page-card {
+    @apply w-full max-w-4xl mx-auto p-3 sm:p-4 md:p-5 bg-white rounded-xl border border-slate-200 shadow-2xs;
   }
 }

@@ -35,78 +35,80 @@
   <body hx-ext="morph" class="font-sans antialiased text-slate-900 flex flex-col {{ if .LoggedIn }}min-h-screen bg-slate-50 justify-between{{ else }}cais-auth-screen{{ end }}">
     <div id="cais-toast-host" aria-live="polite">
       {{ if .Flash }}
-      <div class="cais-toast-enter fixed top-6 left-1/2 -translate-x-1/2 z-50 bg-slate-900 text-white px-5 py-3 rounded-2xl shadow-xl flex items-center gap-2 border border-slate-700/50" role="status">
+      <div class="cais-toast-enter fixed top-[max(1rem,env(safe-area-inset-top))] left-1/2 -translate-x-1/2 z-50 max-w-[calc(100vw-2rem)] bg-slate-900 text-white px-4 sm:px-5 py-3 rounded-2xl shadow-xl flex items-center gap-2 border border-slate-700/50" role="status">
         {{ template "icon_sparkles_md" . }}
         <span class="text-xs font-bold">{{ .Flash.Message }}</span>
       </div>
       {{ end }}
     </div>
     {{ if .LoggedIn }}
-    <div class="flex flex-col flex-1">
-      <header class="bg-white border-b border-slate-200 sticky top-0 z-40 shadow-xs">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-2.5 flex flex-col md:flex-row md:items-center md:justify-between gap-3">
-          <a href="/" class="flex items-center gap-2.5 group">
-            <div class="p-2 bg-indigo-600 rounded-lg text-white shadow-xs flex items-center justify-center group-hover:bg-indigo-700 transition">
-              {{ template "icon_store_md" . }}
-            </div>
-            <div>
-              <h1 class="text-lg font-black text-slate-900 tracking-tight font-display flex items-center gap-1.5 leading-none">
-                {{ .AppName }}
-                <span class="text-[9px] bg-indigo-100 text-indigo-800 px-1.5 py-0.5 rounded-md font-bold uppercase tracking-wider">Beta Colaborativo</span>
-              </h1>
-              <p class="text-[10px] text-slate-500 font-semibold mt-1 flex items-center gap-1">
-                {{ template "icon_map_sm" . }}
-                Preços colaborativos na sua cidade
-              </p>
-            </div>
-          </a>
-          <div class="flex items-center justify-between sm:justify-start gap-4 p-2 bg-slate-50 border border-slate-200 rounded-xl">
-            <div class="flex items-center gap-2">
-              <div class="w-8 h-8 bg-amber-100 text-amber-800 font-extrabold rounded-md flex items-center justify-center text-xs shadow-2xs">
-                Lvl {{ .UserLevel }}
+    <div class="flex flex-col flex-1 min-h-0">
+      <div class="mercado-chrome">
+        <header>
+          <div class="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-2.5 sm:py-3 flex flex-col gap-2.5 sm:gap-3 md:flex-row md:items-center md:justify-between safe-x">
+            <a href="/" class="flex items-center gap-2.5 group min-w-0">
+              <div class="p-2 bg-indigo-600 rounded-lg text-white shadow-xs flex items-center justify-center group-hover:bg-indigo-700 transition flex-shrink-0">
+                {{ template "icon_store_md" . }}
               </div>
-              <div>
-                <span class="text-[9px] text-slate-500 block font-bold leading-none uppercase tracking-wider">Sua Reputação</span>
-                <span class="text-xs font-black text-slate-800 font-mono flex items-center gap-1 mt-0.5">
-                  {{ template "icon_sparkles_sm" . }}
-                  {{ .UserPoints }} pts
-                </span>
+              <div class="min-w-0">
+                <h1 class="text-base sm:text-lg font-black text-slate-900 tracking-tight font-display flex items-center gap-1.5 leading-none flex-wrap">
+                  <span class="truncate">{{ .AppName }}</span>
+                  <span class="hidden sm:inline text-[9px] bg-indigo-100 text-indigo-800 px-1.5 py-0.5 rounded-md font-bold uppercase tracking-wider flex-shrink-0">Beta Colaborativo</span>
+                </h1>
+                <p class="hidden sm:flex text-[10px] text-slate-500 font-semibold mt-1 items-center gap-1">
+                  {{ template "icon_map_sm" . }}
+                  Preços colaborativos na sua cidade
+                </p>
+              </div>
+            </a>
+            <div class="mercado-stat-card">
+              <div class="flex items-center gap-2 min-w-0">
+                <div class="w-8 h-8 bg-amber-100 text-amber-800 font-extrabold rounded-md flex items-center justify-center text-xs shadow-2xs flex-shrink-0">
+                  Lvl {{ .UserLevel }}
+                </div>
+                <div class="min-w-0">
+                  <span class="text-[9px] text-slate-500 block font-bold leading-none uppercase tracking-wider">Reputação</span>
+                  <span class="text-xs font-black text-slate-800 font-mono flex items-center gap-1 mt-0.5 truncate">
+                    {{ template "icon_sparkles_sm" . }}
+                    {{ .UserPoints }} pts
+                  </span>
+                </div>
+              </div>
+              <div class="h-5 w-px bg-slate-200 hidden sm:block"></div>
+              <div class="text-right flex-shrink-0">
+                <span class="text-[9px] text-slate-500 block font-bold leading-none uppercase tracking-wider">Rank</span>
+                <span class="text-xs font-black text-indigo-700 font-mono">#{{ .UserRank }}</span>
               </div>
             </div>
-            <div class="h-5 w-px bg-slate-200 hidden sm:block"></div>
-            <div class="hidden sm:block text-right">
-              <span class="text-[9px] text-slate-500 block font-bold leading-none uppercase tracking-wider">Rank Regional</span>
-              <span class="text-xs font-black text-indigo-700 font-mono">#{{ .UserRank }}</span>
+          </div>
+        </header>
+        <nav id="cais-nav" class="border-t border-slate-100 bg-white">
+          <div class="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 safe-x">
+            <div class="flex items-center justify-between gap-2">
+              <div class="mercado-nav-scroll" role="tablist" aria-label="Navegação principal">
+                <!-- cais:nav -->
+                {{ template "nav_links_mercado" . }}
+              </div>
+              <div class="flex items-center py-2 flex-shrink-0 pl-1 border-l border-slate-100">
+                <form method="post" action="/logout" class="inline">
+                  {{ csrfField .CSRFToken }}
+                  <button type="submit" class="text-[10px] font-bold text-slate-600 hover:text-slate-900 px-2 py-1.5 rounded-md hover:bg-slate-100 touch-manipulation">Sair</button>
+                </form>
+              </div>
             </div>
           </div>
-        </div>
-      </header>
-      <nav id="cais-nav" class="bg-white border-b border-slate-200 shadow-2xs sticky top-[53px] z-30">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div class="flex items-center justify-between gap-3">
-          <div class="flex space-x-1 py-1.5 overflow-x-auto no-scrollbar flex-1">
-            <!-- cais:nav -->
-            {{ template "nav_links_mercado" . }}
-          </div>
-          <div class="flex items-center gap-2 py-1.5 flex-shrink-0 pr-1">
-            <form method="post" action="/logout" class="inline">
-              {{ csrfField .CSRFToken }}
-              <button type="submit" class="text-[10px] font-bold text-slate-600 hover:text-slate-900 px-2 py-1 rounded-md hover:bg-slate-100">Sair</button>
-            </form>
-          </div>
-          </div>
-        </div>
-      </nav>
-      <main id="cais-main" data-cais-view-transition class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-5 flex-grow w-full">{{ template "content" . }}</main>
+        </nav>
+      </div>
+      <main id="cais-main" data-cais-view-transition class="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-4 sm:py-5 flex-grow w-full min-w-0 safe-x">{{ template "content" . }}</main>
     </div>
-    <footer class="mt-auto border-t border-slate-200/80 pt-8 pb-6 text-center text-xs text-slate-400">
-      <div class="max-w-7xl mx-auto px-4">
-        <p>© 2026 {{ .AppName }}. Uma iniciativa comunitária para combater a inflação.</p>
-        <p class="mt-1">HTMX + Go + SQLite — dados colaborativos, app-like UX.</p>
+    <footer class="mt-auto border-t border-slate-200/80 pt-6 sm:pt-8 pb-6 safe-bottom text-center text-[11px] sm:text-xs text-slate-400 safe-x">
+      <div class="max-w-7xl mx-auto px-3 sm:px-4">
+        <p>© 2026 {{ .AppName }}. Comunidade contra a inflação.</p>
+        <p class="mt-1 hidden sm:block">HTMX + Go + SQLite — dados colaborativos, app-like UX.</p>
       </div>
     </footer>
     {{ else }}
-    <main id="cais-main" class="flex-1 flex items-center justify-center w-full px-4 sm:px-6 py-8">
+    <main id="cais-main" class="flex-1 flex items-center justify-center w-full px-3 sm:px-6 py-6 sm:py-8 safe-x safe-bottom">
       {{ template "content" . }}
     </main>
     {{ end }}
