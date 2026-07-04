@@ -95,6 +95,10 @@ func NewSQLiteStore(dsn string, env string) (*SQLiteStore, error) {
 			_ = wrapped.Close()
 			return nil, err
 		}
+		if err := st.SeedMercadoDemoFeedSample(); err != nil {
+			_ = wrapped.Close()
+			return nil, err
+		}
 	}
 	return st, nil
 }

@@ -3,6 +3,8 @@ package store
 import (
 	"database/sql"
 	"fmt"
+
+	"github.com/puppe1990/cais/pkg/cais/session"
 )
 
 // SeedMercadoDemo inserts catalog data (supermarkets, badges, reference products).
@@ -78,4 +80,48 @@ func seedMercadoDemoProfile(db *sql.DB) error {
 		demoUserID, "Demo", defaultCity,
 	)
 	return err
+}
+
+// SeedMercadoDemoFeedSample adds a community price report in development so demo
+// can practice voting without a second account.
+func (s *SQLiteStore) SeedMercadoDemoFeedSample() error {
+	db := s.db.Raw()
+	hash, err := session.HashPassword("password")
+	if err != nil {
+		return err
+	}
+	if _, err := db.Exec(
+		`INSERT OR IGNORE INTO users (email, password_hash) VALUES (?, ?)`,
+		"ana@example.com", hash,
+	); err != nil {
+		return fmt.Errorf("seed ana user: %w", err)
+	}
+	var anaID int64
+	if err := db.QueryRow(`SELECT id FROM users WHERE email = ?`, "ana@example.com").Scan(&anaID); err != nil {
+		return fmt.Errorf("find ana user: %w", err)
+	}
+	if _, err := db.Exec(
+		`INSERT OR IGNORE INTO user_profiles (user_id, display_name, points, city) VALUES (?, ?, ?, ?)`,
+		anaID, "Ana", 15, defaultCity,
+	); err != nil {
+		return fmt.Errorf("seed ana profile: %w", err)
+	}
+	var existing int
+	if err := db.QueryRow(`SELECT COUNT(*) FROM price_reports WHERE user_id = ?`, anaID).Scan(&existing); err != nil {
+		return err
+	}
+	if existing > 0 {
+		return nil
+	}
+	var productID, marketID int64
+	if err := db.QueryRow(`SELECT id FROM products WHERE barcode = ?`, "7896256801011").Scan(&productID); err != nil {
+		return fmt.Errorf("sample product: %w", err)
+	}
+	if err := db.QueryRow(`SELECT id FROM supermarkets WHERE name = ?`, "Pão de Açúcar Paulista").Scan(&marketID); err != nil {
+		return fmt.Errorf("sample supermarket: %w", err)
+	}
+	if _, err := s.CreatePriceReport(anaID, productID, marketID, 549); err != nil {
+		return fmt.Errorf("sample report: %w", err)
+	}
+	return nil
 }
