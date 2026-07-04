@@ -59,8 +59,9 @@
     @apply hidden;
   }
 
+  .htmx-indicator.htmx-request,
   .htmx-request .htmx-indicator {
-    @apply inline-block;
+    @apply flex;
   }
 
   .htmx-request .htmx-request-hide {
@@ -206,6 +207,26 @@
 
   .mercado-page-card {
     @apply w-full max-w-4xl mx-auto p-3 sm:p-4 md:p-5 bg-white rounded-xl border border-slate-200 shadow-2xs;
+  }
+
+  .mercado-lookup-spinner {
+    @apply items-center justify-center gap-2.5 py-4 px-3 rounded-xl border border-indigo-100 bg-indigo-50/80 text-indigo-800;
+  }
+
+  .mercado-spinner-icon {
+    @apply w-5 h-5 flex-shrink-0 animate-spin text-indigo-600;
+  }
+
+  .mercado-spinner-track {
+    @apply opacity-20;
+  }
+
+  .mercado-spinner-head {
+    @apply opacity-100;
+  }
+
+  .mercado-lookup-spinner-text {
+    @apply text-xs font-bold tracking-tight;
   }
 
   .mercado-achievements-head {

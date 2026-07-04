@@ -42,6 +42,29 @@ func TestSupermarketHandler_pagesRender(t *testing.T) {
 	}
 }
 
+func TestSupermarketHandler_scan_lookupSpinner(t *testing.T) {
+	h := NewSupermarketHandler(setupTestRenderer(t), setupTestStore(t), testSite(), cais.Config{Env: "development"})
+
+	req := httptest.NewRequest(http.MethodGet, "/", nil)
+	req = session.WithUserID(req, 1)
+	rr := httptest.NewRecorder()
+	h.Scan(rr, req)
+
+	if rr.Code != http.StatusOK {
+		t.Fatalf("status = %d", rr.Code)
+	}
+	body := rr.Body.String()
+	if !strings.Contains(body, `id="scan-lookup-spinner"`) {
+		t.Error("scan page should include lookup spinner")
+	}
+	if !strings.Contains(body, "Buscando produto") {
+		t.Error("scan page should show lookup loading message")
+	}
+	if !strings.Contains(body, `hx-indicator="#scan-lookup-spinner"`) {
+		t.Error("lookup form should reference spinner indicator")
+	}
+}
+
 func TestSupermarketHandler_scan_noDemoRapido(t *testing.T) {
 	h := NewSupermarketHandler(setupTestRenderer(t), setupTestStore(t), testSite(), cais.Config{Env: "development"})
 

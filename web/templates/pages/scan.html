@@ -69,9 +69,7 @@
             method="post"
             action="/scan/lookup"
             class="space-y-3"
-            hx-post="/scan/lookup"
-            hx-target="#scan-result"
-            hx-swap="innerHTML swap:150ms"
+            {{ hxForm "/scan/lookup" "#scan-result" "#scan-lookup-spinner" }}
           >
             {{ csrfField .CSRFToken }}
             <input
@@ -91,12 +89,13 @@
             />
             <button
               type="submit"
-              class="w-full bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold py-2.5 px-4 rounded-lg transition shadow-2xs"
+              class="w-full bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold py-2.5 px-4 rounded-lg transition shadow-2xs inline-flex items-center justify-center gap-2 min-h-[2.5rem]"
             >
-              Buscar Produto
+              <span class="htmx-request-hide">Buscar Produto</span>
             </button>
           </form>
-          <div class="mt-4">
+          <div class="mt-4 space-y-3">
+            {{ template "scan_lookup_spinner" . }}
             {{ template "scan_result" . }}
           </div>
         </div>
