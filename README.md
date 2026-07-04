@@ -23,13 +23,13 @@ Demo em desenvolvimento: `demo@example.com` / `password`
 
 ## Setup
 
-O `go.mod` usa `replace` para o framework Cais local. Estrutura esperada:
+Depende de [github.com/puppe1990/cais](https://github.com/puppe1990/cais) v0.6.0+.
 
-```
-Projetos/
-  Cais/              ← github.com/puppe1990/cais
-  Cais-apps/
-    mercado/         ← este repositório
+Para desenvolver com o framework local:
+
+```bash
+go work init .
+go work use ../../Cais   # ajuste o path para o clone do Cais
 ```
 
 ```bash
@@ -75,7 +75,7 @@ web/static/js/      → scan.js, html5-qrcode
 
 ## CI
 
-GitHub Actions: `go test`, `golangci-lint`, Prettier. O workflow faz checkout do repositório [cais](https://github.com/puppe1990/cais) para satisfazer o `replace` do `go.mod`.
+GitHub Actions: `go test`, `golangci-lint`, Prettier.
 
 ```bash
 make pre-commit-install

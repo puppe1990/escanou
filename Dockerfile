@@ -9,12 +9,9 @@ RUN npx tailwindcss -i input.css -o styles.css --minify
 
 # Stage 2: Go build
 FROM golang:1.26-alpine AS build
-RUN apk add --no-cache git
 WORKDIR /app
-ARG CAIS_REF=main
-RUN git clone --depth 1 --branch "${CAIS_REF}" https://github.com/puppe1990/cais.git /cais
 COPY go.mod go.sum ./
-RUN go mod edit -replace=github.com/puppe1990/cais=/cais && go mod download
+RUN go mod download
 COPY . .
 COPY --from=css /app/styles.css ./web/static/css/styles.css
 RUN CGO_ENABLED=0 go build -ldflags="-s -w" -o /mercado ./cmd/server
