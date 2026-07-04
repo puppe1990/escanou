@@ -26,24 +26,24 @@ type SupermarketPageData struct {
 	Scans   []PriceScanView
 	Markets []MarketView
 
-	Badges              []BadgeView
-	Leaders             []LeaderView
-	LevelXP             int
-	LevelXPMax          int
-	LevelProgressPct    int
-	UnlockedBadgeCount  int
-	TotalBadgeCount     int
-	UserDisplayName     string
-	UserCity            string
-	LookupProduct       *ProductView
-	LookupError     string
-	LookupBarcode   string
-	LookupNeedsName bool
-	ReportProductID int64
-	SupermarketOpts []SupermarketOption
-	SubmissionCount   int
-	ShoppingListTotal string
-	MapMarkersJSON    template.JS
+	Badges             []BadgeView
+	Leaders            []LeaderView
+	LevelXP            int
+	LevelXPMax         int
+	LevelProgressPct   int
+	UnlockedBadgeCount int
+	TotalBadgeCount    int
+	UserDisplayName    string
+	UserCity           string
+	LookupProduct      *ProductView
+	LookupError        string
+	LookupBarcode      string
+	LookupNeedsName    bool
+	ReportProductID    int64
+	SupermarketOpts    []SupermarketOption
+	SubmissionCount    int
+	ShoppingListTotal  string
+	MapMarkersJSON     template.JS
 }
 
 type SupermarketOption struct {
@@ -589,7 +589,7 @@ func (h *SupermarketHandler) marketViews() []MarketView {
 			Name: m.Name, Address: m.Address,
 			Distance: fmt.Sprintf("%.1f km", float64(i+1)*1.2),
 			Offers:   offers, BestDeal: best,
-			Lat:      m.Lat, Lng: m.Lng,
+			Lat: m.Lat, Lng: m.Lng,
 		})
 	}
 	return out

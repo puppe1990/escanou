@@ -71,7 +71,7 @@
 
     mapInstance = L.map(container, { scrollWheelZoom: false }).setView(
       [center.lat, center.lng],
-      center.zoom,
+      center.zoom
     );
 
     L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {

@@ -15,10 +15,10 @@ import (
 
 func TestLevelProgress(t *testing.T) {
 	for _, tc := range []struct {
-		points      int
-		wantXP      int
-		wantMax     int
-		wantPct     int
+		points  int
+		wantXP  int
+		wantMax int
+		wantPct int
 	}{
 		{0, 0, 100, 0},
 		{35, 35, 100, 35},
