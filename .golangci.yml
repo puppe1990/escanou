@@ -23,7 +23,7 @@ formatters:
   settings:
     goimports:
       local-prefixes:
-        - github.com/puppe1990/mercado
+        - github.com/puppe1990/escanou
   exclusions:
     generated: lax
     paths:

@@ -14,22 +14,22 @@ O escaneamento de código de barras no celular exige **HTTPS** e permissão de c
 Na máquina de build (com Docker):
 
 ```bash
-cd /caminho/para/mercado
-docker build -t mercado:latest .
-docker save mercado:latest | gzip > mercado.tar.gz
-scp mercado.tar.gz ubuntu@SEU_IP:/tmp/
+cd /caminho/para/escanou
+docker build -t escanou:latest .
+docker save escanou:latest | gzip > escanou.tar.gz
+scp escanou.tar.gz ubuntu@SEU_IP:/tmp/
 ```
 
 Na instância:
 
 ```bash
-docker load < /tmp/mercado.tar.gz
-mkdir -p /opt/mercado/data
+docker load < /tmp/escanou.tar.gz
+mkdir -p /opt/escanou/data
 ```
 
 ## 3. Variáveis de produção
 
-Crie `/opt/mercado/.env`:
+Crie `/opt/escanou/.env`:
 
 ```bash
 ENV=production
@@ -68,12 +68,12 @@ sudo systemctl reload caddy
 
 ## 5. Container da aplicação
 
-`/opt/mercado/docker-compose.yml`:
+`/opt/escanou/docker-compose.yml`:
 
 ```yaml
 services:
-  mercado:
-    image: mercado:latest
+  escanou:
+    image: escanou:latest
     restart: unless-stopped
     env_file: .env
     volumes:
@@ -83,7 +83,7 @@ services:
 ```
 
 ```bash
-cd /opt/mercado
+cd /opt/escanou
 docker compose up -d
 ```
 
@@ -106,11 +106,7 @@ No celular:
 
 ## 7. Worker de jobs (opcional)
 
-```bash
-docker compose exec mercado /app/cais jobs work --concurrency 2
-```
-
-Ou rode um segundo serviço no compose apontando para o mesmo volume de dados.
+Rode um segundo serviço no compose com o mesmo volume de dados e `cais jobs work` (ver [jobs design](https://github.com/puppe1990/cais)).
 
 ## Troubleshooting
 

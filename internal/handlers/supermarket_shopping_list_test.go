@@ -9,7 +9,7 @@ import (
 	"github.com/puppe1990/cais/pkg/cais"
 	"github.com/puppe1990/cais/pkg/cais/session"
 
-	"github.com/puppe1990/mercado/internal/store"
+	"github.com/puppe1990/escanou/internal/store"
 )
 
 func TestShoppingListTotal(t *testing.T) {

@@ -10,8 +10,8 @@ import (
 	"github.com/puppe1990/cais/pkg/cais/meta"
 	"github.com/puppe1990/cais/pkg/cais/validate"
 
-	"github.com/puppe1990/mercado/internal/models"
-	"github.com/puppe1990/mercado/internal/store"
+	"github.com/puppe1990/escanou/internal/models"
+	"github.com/puppe1990/escanou/internal/store"
 )
 
 type ContactHandler struct {

@@ -6,7 +6,7 @@ import (
 	"github.com/puppe1990/cais/pkg/cais"
 	"github.com/puppe1990/cais/pkg/cais/middleware"
 
-	"github.com/puppe1990/mercado/internal/handlers"
+	"github.com/puppe1990/escanou/internal/handlers"
 )
 
 func registerRoutes(r *cais.Router, deps Deps, cfg cais.Config) {

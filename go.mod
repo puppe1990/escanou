@@ -1,4 +1,4 @@
-module github.com/puppe1990/mercado
+module github.com/puppe1990/escanou
 
 go 1.26.4
 

@@ -17,8 +17,8 @@ import (
 	"github.com/puppe1990/cais/pkg/cais/money"
 	"github.com/puppe1990/cais/pkg/cais/session"
 
-	"github.com/puppe1990/mercado/internal/models"
-	"github.com/puppe1990/mercado/internal/store"
+	"github.com/puppe1990/escanou/internal/models"
+	"github.com/puppe1990/escanou/internal/store"
 )
 
 type SupermarketPageData struct {

@@ -11,10 +11,10 @@ import (
 	"github.com/puppe1990/cais/pkg/cais/boot"
 	"github.com/puppe1990/cais/pkg/cais/meta"
 
-	"github.com/puppe1990/mercado/internal/app"
-	appi18n "github.com/puppe1990/mercado/internal/i18n"
-	"github.com/puppe1990/mercado/internal/store"
-	"github.com/puppe1990/mercado/web"
+	"github.com/puppe1990/escanou/internal/app"
+	appi18n "github.com/puppe1990/escanou/internal/i18n"
+	"github.com/puppe1990/escanou/internal/store"
+	"github.com/puppe1990/escanou/web"
 )
 
 func main() {

@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Stop mercado dev processes and free the configured port.
+# Stop Escanou dev processes and free the configured port.
 set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$ROOT"
@@ -14,7 +14,7 @@ fi
 PORT="${PORT:-:8090}"
 PORT_NUM="${PORT#:}"
 
-echo "=> Parando mercado (porta ${PORT_NUM})…"
+echo "=> Parando Escanou (porta ${PORT_NUM})…"
 
 pkill -f "${ROOT}/tmp/main" 2>/dev/null || true
 pkill -f "${ROOT}.*air -c .air.toml" 2>/dev/null || true

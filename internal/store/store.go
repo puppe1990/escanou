@@ -16,7 +16,7 @@ import (
 	caissqlite "github.com/puppe1990/cais/pkg/cais/sqlite"
 	"github.com/puppe1990/cais/pkg/cais/sqllog"
 
-	"github.com/puppe1990/mercado/internal/models"
+	"github.com/puppe1990/escanou/internal/models"
 )
 
 var ErrEmailTaken = errors.New("email already registered")

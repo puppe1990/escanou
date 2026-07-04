@@ -1,8 +1,8 @@
 package db
 
 import (
-	"github.com/puppe1990/mercado/internal/models"
-	"github.com/puppe1990/mercado/internal/store"
+	"github.com/puppe1990/escanou/internal/models"
+	"github.com/puppe1990/escanou/internal/store"
 )
 
 // RunSeeds populates demo data. Safe to run multiple times.

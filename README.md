@@ -1,4 +1,4 @@
-# mercado
+# Escanou
 
 Comparador de preços de supermercado — app [Cais](https://github.com/puppe1990/cais) com escaneamento de código de barras, feed colaborativo e gamificação.
 
@@ -33,7 +33,7 @@ go work use ../../Cais   # ajuste o path para o clone do Cais
 ```
 
 ```bash
-cd mercado
+cd escanou
 cp .env.example .env
 cais install
 cais dev          # http://localhost:8080
@@ -60,7 +60,7 @@ Ver `.env.example` para produção (`ADMIN_TOKEN`, SMTP, etc.).
 Guia AWS Lightsail com HTTPS e câmera: [`deploy/lightsail.md`](deploy/lightsail.md)
 
 ```bash
-docker build -t mercado:latest .
+docker build -t escanou:latest .
 ```
 
 ## Estrutura
@@ -68,7 +68,7 @@ docker build -t mercado:latest .
 ```
 internal/app/       → rotas e bootstrap
 internal/handlers/  → supermarket (scan, feed, map…), auth
-internal/store/     → SQLite + domínio mercado
+internal/store/     → SQLite + domínio de preços
 web/templates/      → HTML + partials (icons, nav, scan)
 web/static/js/      → scan.js, html5-qrcode
 ```
