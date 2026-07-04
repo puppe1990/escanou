@@ -9,7 +9,10 @@ type PriceReport struct {
 	UserID          int64
 	PriceCents      int
 	Confirmations   int
+	Disputes        int
 	Flagged         bool
+	ViewerConfirmed bool
+	ViewerDisputed  bool
 	CreatedAt       time.Time
 	ProductName     string
 	SupermarketName string

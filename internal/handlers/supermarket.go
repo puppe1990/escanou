@@ -57,6 +57,9 @@ type PriceScanView struct {
 	Contributor     string
 	Level           int
 	ConfirmedCount  int
+	DisputeCount    int
+	ConfirmDisabled bool
+	DisputeDisabled bool
 	Verified        bool
 	Outdated        bool
 	Flagged         bool
@@ -171,7 +174,8 @@ func (h *SupermarketHandler) Feed(w http.ResponseWriter, r *http.Request) {
 	}
 	data := h.base(r)
 	data.ActiveNav = "feed"
-	data.Scans = h.feedScans()
+	uid, _ := session.UserID(r)
+	data.Scans = h.feedScans(uid)
 	httpx.RenderOrError(w, h.renderer, "base", "feed", data, h.cfg)
 }
 
@@ -357,8 +361,12 @@ func (h *SupermarketHandler) ConfirmPost(w http.ResponseWriter, r *http.Request,
 	}
 	userID, _ := session.UserID(r)
 	count, err := h.store.ConfirmPriceReport(reportID, userID)
+	disputeCount := h.disputeCountFor(reportID)
 	if err == store.ErrOwnReport || err == store.ErrAlreadyConfirmed {
-		httpx.RenderOrError(w, h.renderer, "", "feed_confirm_btn", confirmBtnData{ID: int(reportID), Count: count, Disabled: true}, h.cfg)
+		h.renderFeedVotes(w, feedVoteData{
+			ID: int(reportID), ConfirmedCount: count, DisputeCount: disputeCount,
+			ConfirmDisabled: true, DisputeDisabled: h.viewerDisputed(reportID, userID),
+		})
 		return
 	}
 	if err != nil {
@@ -366,7 +374,10 @@ func (h *SupermarketHandler) ConfirmPost(w http.ResponseWriter, r *http.Request,
 		return
 	}
 	cais.SetToast(w, "+2 pts — obrigado por confirmar!")
-	httpx.RenderOrError(w, h.renderer, "", "feed_confirm_btn", confirmBtnData{ID: int(reportID), Count: count}, h.cfg)
+	h.renderFeedVotes(w, feedVoteData{
+		ID: int(reportID), ConfirmedCount: count, DisputeCount: disputeCount,
+		ConfirmDisabled: true, DisputeDisabled: h.viewerDisputed(reportID, userID),
+	})
 }
 
 func (h *SupermarketHandler) FlagPost(w http.ResponseWriter, r *http.Request, reportID int64) {
@@ -374,30 +385,94 @@ func (h *SupermarketHandler) FlagPost(w http.ResponseWriter, r *http.Request, re
 		return
 	}
 	userID, _ := session.UserID(r)
-	if err := h.store.FlagPriceReport(reportID); err != nil {
-		http.Error(w, "flag failed", http.StatusInternalServerError)
+	count, err := h.store.DisputePriceReport(reportID, userID)
+	confirmCount := h.confirmCountFor(reportID)
+	if err == store.ErrOwnReport || err == store.ErrAlreadyDisputed {
+		h.renderFeedVotes(w, feedVoteData{
+			ID: int(reportID), ConfirmedCount: confirmCount, DisputeCount: count,
+			ConfirmDisabled: h.viewerConfirmed(reportID, userID),
+			DisputeDisabled: true,
+		})
 		return
 	}
-	_ = userID
-	if r.Header.Get("HX-Request") == "true" {
+	if err != nil {
+		http.Error(w, "dispute failed", http.StatusInternalServerError)
+		return
+	}
+	if count >= store.DisputeFlagThreshold {
+		cais.SetToast(w, "Preço ocultado após várias contestações")
+		cais.SetRetarget(w, fmt.Sprintf("#feed-item-%d", reportID))
+		w.Header().Set("HX-Reswap", "delete")
 		w.WriteHeader(http.StatusOK)
 		return
 	}
-	httpx.SeeOther(w, r, "/feed")
+	h.renderFeedVotes(w, feedVoteData{
+		ID: int(reportID), ConfirmedCount: confirmCount, DisputeCount: count,
+		ConfirmDisabled: h.viewerConfirmed(reportID, userID),
+		DisputeDisabled: true,
+	})
 }
 
-type confirmBtnData struct {
-	ID       int
-	Count    int
-	Disabled bool
+type feedVoteData struct {
+	ID              int
+	ConfirmedCount  int
+	DisputeCount    int
+	ConfirmDisabled bool
+	DisputeDisabled bool
 }
 
-func (h *SupermarketHandler) feedScans() []PriceScanView {
-	reports, err := h.store.ListFeedReports(50)
+func (h *SupermarketHandler) renderFeedVotes(w http.ResponseWriter, data feedVoteData) {
+	if err := httpx.RenderPartial(w, h.renderer, "feed_vote_btns", data); err != nil {
+		http.Error(w, "render failed", http.StatusInternalServerError)
+	}
+}
+
+func (h *SupermarketHandler) confirmCountFor(reportID int64) int {
+	reports, _ := h.store.ListFeedReports(1000, 0)
+	for _, r := range reports {
+		if r.ID == reportID {
+			return r.Confirmations
+		}
+	}
+	return 0
+}
+
+func (h *SupermarketHandler) disputeCountFor(reportID int64) int {
+	reports, _ := h.store.ListFeedReports(1000, 0)
+	for _, r := range reports {
+		if r.ID == reportID {
+			return r.Disputes
+		}
+	}
+	return 0
+}
+
+func (h *SupermarketHandler) viewerConfirmed(reportID, userID int64) bool {
+	reports, _ := h.store.ListFeedReports(1000, userID)
+	for _, r := range reports {
+		if r.ID == reportID {
+			return r.ViewerConfirmed
+		}
+	}
+	return false
+}
+
+func (h *SupermarketHandler) viewerDisputed(reportID, userID int64) bool {
+	reports, _ := h.store.ListFeedReports(1000, userID)
+	for _, r := range reports {
+		if r.ID == reportID {
+			return r.ViewerDisputed
+		}
+	}
+	return false
+}
+
+func (h *SupermarketHandler) feedScans(viewerID int64) []PriceScanView {
+	reports, err := h.store.ListFeedReports(50, viewerID)
 	if err != nil {
 		return nil
 	}
-	return priceReportsToViews(reports)
+	return priceReportsToViews(reports, viewerID)
 }
 
 func shoppingListTotalCents(prices []int) int {
@@ -417,10 +492,10 @@ func (h *SupermarketHandler) userShoppingList(userID int64) ([]PriceScanView, st
 	for _, r := range reports {
 		total += r.PriceCents
 	}
-	return priceReportsToViews(reports), money.FormatBRL(total)
+	return priceReportsToViews(reports, userID), money.FormatBRL(total)
 }
 
-func priceReportsToViews(reports []models.PriceReport) []PriceScanView {
+func priceReportsToViews(reports []models.PriceReport, viewerID int64) []PriceScanView {
 	out := make([]PriceScanView, 0, len(reports))
 	for _, r := range reports {
 		out = append(out, PriceScanView{
@@ -432,6 +507,9 @@ func priceReportsToViews(reports []models.PriceReport) []PriceScanView {
 			Contributor:     r.Contributor,
 			Level:           r.ContributorLvl,
 			ConfirmedCount:  r.Confirmations,
+			DisputeCount:    r.Disputes,
+			ConfirmDisabled: r.ViewerConfirmed || r.UserID == viewerID,
+			DisputeDisabled: r.ViewerDisputed || r.UserID == viewerID,
 			Verified:        store.ReportVerified(r.Confirmations),
 			Outdated:        store.ReportOutdated(r.CreatedAt),
 			Flagged:         r.Flagged,

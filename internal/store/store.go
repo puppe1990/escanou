@@ -39,10 +39,11 @@ type Store interface {
 	CreateProductFromOFF(off barcode.Product) (models.Product, error)
 	ProductAvgPriceCents(productID int64) (int, error)
 	ListSupermarkets() ([]models.Supermarket, error)
-	ListFeedReports(limit int) ([]models.PriceReport, error)
+	ListFeedReports(limit int, viewerUserID int64) ([]models.PriceReport, error)
 	ListUserReports(userID int64, limit int) ([]models.PriceReport, error)
 	CreatePriceReport(userID, productID, supermarketID int64, priceCents int) (int64, error)
 	ConfirmPriceReport(reportID, userID int64) (int, error)
+	DisputePriceReport(reportID, userID int64) (int, error)
 	FlagPriceReport(reportID int64) error
 	ListBadges(userID int64) ([]models.Badge, error)
 	Leaderboard(limit int, currentUserID int64) ([]models.LeaderboardEntry, error)
