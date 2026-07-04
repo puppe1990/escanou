@@ -91,7 +91,63 @@
   }
 
   .mercado-chrome {
-    @apply sticky top-0 z-40 bg-white border-b border-slate-200 shadow-xs safe-top;
+    @apply sticky top-0 z-40 safe-top;
+    background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
+    border-bottom: 1px solid rgb(226 232 240 / 0.9);
+    box-shadow: 0 1px 0 rgb(255 255 255 / 0.8) inset, 0 4px 24px -12px rgb(15 23 42 / 0.12);
+  }
+
+  .mercado-header-inner {
+    @apply flex items-center justify-between gap-3 py-2.5 sm:py-3;
+  }
+
+  .mercado-brand {
+    @apply flex items-center gap-2.5 min-w-0;
+  }
+
+  .mercado-brand-icon {
+    @apply p-2 rounded-xl text-white flex items-center justify-center flex-shrink-0 shadow-2xs transition-colors;
+    background: linear-gradient(135deg, #4f46e5 0%, #6366f1 55%, #7c3aed 100%);
+  }
+
+  .mercado-brand:hover .mercado-brand-icon {
+    filter: brightness(1.05);
+  }
+
+  .mercado-brand-title {
+    @apply text-base sm:text-lg font-black text-slate-900 tracking-tight font-display flex items-center gap-1.5 leading-none min-w-0;
+  }
+
+  .mercado-brand-badge {
+    @apply text-[9px] bg-indigo-50 text-indigo-700 ring-1 ring-indigo-100 px-1.5 py-0.5 rounded-full font-bold uppercase tracking-wider flex-shrink-0;
+  }
+
+  .mercado-brand-tagline {
+    @apply text-[10px] text-slate-500 font-medium mt-1 items-center gap-1;
+  }
+
+  .mercado-header-actions {
+    @apply flex items-center gap-2 flex-shrink-0;
+  }
+
+  .mercado-header-stats {
+    @apply flex items-center gap-1.5 sm:gap-2;
+  }
+
+  .mercado-level-pill {
+    @apply inline-flex items-center justify-center min-w-[2.25rem] h-7 px-2 rounded-full text-[10px] font-extrabold text-amber-900 bg-gradient-to-b from-amber-50 to-amber-100 ring-1 ring-amber-200/80 shadow-2xs;
+  }
+
+  .mercado-points-pill {
+    @apply inline-flex items-center gap-1 h-7 px-2.5 rounded-full text-[11px] font-bold text-slate-800 bg-white ring-1 ring-slate-200/90 shadow-2xs;
+  }
+
+  .mercado-rank-pill {
+    @apply inline-flex items-center justify-center h-7 px-2.5 rounded-full text-[11px] font-black text-indigo-700 bg-indigo-50 ring-1 ring-indigo-100;
+  }
+
+  .mercado-logout-btn {
+    @apply p-2 rounded-full text-slate-500 hover:text-slate-800 hover:bg-slate-100 ring-1 ring-transparent hover:ring-slate-200 transition-colors;
   }
 
   .mercado-nav-scroll {
@@ -146,10 +202,6 @@
 
   .mercado-bottom-tab.is-active .cais-nav-icon {
     @apply text-white;
-  }
-
-  .mercado-stat-card {
-    @apply flex items-center justify-between sm:justify-start gap-3 sm:gap-4 p-2.5 sm:p-2 bg-slate-50 border border-slate-200 rounded-xl w-full sm:w-auto;
   }
 
   .mercado-page-card {
