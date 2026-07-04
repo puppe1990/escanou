@@ -33,10 +33,10 @@ func seedMercadoCatalog(db *sql.DB) error {
 		name, address string
 		lat, lng      float64
 	}{
-		{"Angeloni Bacacheri", "R. Imaculada Conceição, 830", -25.4284, -49.2733},
-		{"Bistek Hauer", "Av. Presidente Kennedy, 2455", -25.4500, -49.2900},
-		{"Carrefour Portão", "Av. República Argentina, 1330", -25.4700, -49.3000},
-		{"Condor Água Verde", "R. Nilo Peçanha, 1250", -25.4400, -49.2800},
+		{"Pão de Açúcar Paulista", "Av. Paulista, 2064", -23.5615, -46.6590},
+		{"Extra Penha", "Av. Penha de França, 569", -23.5420, -46.5450},
+		{"Carrefour Tatuapé", "R. Serra de Bragança, 629", -23.5405, -46.5755},
+		{"Assaí São Miguel", "Av. Nordestina, 4944", -23.4945, -46.4440},
 	}
 	for _, m := range markets {
 		if _, err := db.Exec(
@@ -74,7 +74,7 @@ func seedMercadoReports(db *sql.DB) error {
 	}
 	_, _ = db.Exec(
 		`INSERT OR IGNORE INTO user_profiles (user_id, display_name, points, city) VALUES (?, ?, ?, ?)`,
-		demoUserID, "Você", 420, "Curitiba",
+		demoUserID, "Você", 420, "São Paulo",
 	)
 	var count int
 	if err := db.QueryRow(`SELECT COUNT(*) FROM price_reports`).Scan(&count); err != nil || count > 0 {
@@ -87,10 +87,10 @@ func seedMercadoReports(db *sql.DB) error {
 		conf    int
 	}
 	reports := []seedReport{
-		{"7896256801011", "Angeloni Bacacheri", 549, 8},
-		{"7894900011517", "Bistek Hauer", 821, 3},
-		{"7891081001015", "Carrefour Portão", 2890, 12},
-		{"7891000000001", "Condor Água Verde", 1850, 1},
+		{"7896256801011", "Pão de Açúcar Paulista", 549, 8},
+		{"7894900011517", "Extra Penha", 821, 3},
+		{"7891081001015", "Carrefour Tatuapé", 2890, 12},
+		{"7891000000001", "Assaí São Miguel", 1850, 1},
 	}
 	for _, r := range reports {
 		var productID, marketID int64

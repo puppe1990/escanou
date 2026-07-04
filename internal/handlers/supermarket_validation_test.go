@@ -12,14 +12,11 @@ import (
 	"github.com/puppe1990/cais/pkg/cais/session"
 )
 
-func TestSupermarket_LookupPost_HTMX_returnsPartial(t *testing.T) {
+func TestSupermarket_LookupPost_invalidBarcode(t *testing.T) {
 	s := setupTestStore(t)
-	if err := s.SeedMercadoDemo(); err != nil {
-		t.Fatal(err)
-	}
 	h := NewSupermarketHandler(setupTestRenderer(t), s, testSite(), cais.Config{Env: "development"})
 
-	form := url.Values{"barcode": {"7896256801011"}}
+	form := url.Values{"barcode": {"1234567890123"}}
 	req := httptest.NewRequest(http.MethodPost, "/scan/lookup", strings.NewReader(form.Encode()))
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 	req.Header.Set("HX-Request", "true")
@@ -28,28 +25,17 @@ func TestSupermarket_LookupPost_HTMX_returnsPartial(t *testing.T) {
 	rr := httptest.NewRecorder()
 	h.LookupPost(rr, req)
 
-	if rr.Code != http.StatusOK {
-		t.Fatalf("status = %d, want 200", rr.Code)
+	if rr.Code != http.StatusUnprocessableEntity {
+		t.Fatalf("status = %d, want 422", rr.Code)
 	}
-	body := rr.Body.String()
-	if strings.Contains(body, "<!doctype html>") {
-		t.Error("HTMX response should be partial, not full page")
-	}
-	if !strings.Contains(body, "Leite Tirol") {
-		t.Errorf("partial missing product name: %s", body)
+	if !strings.Contains(rr.Body.String(), "Código inválido") {
+		t.Errorf("body = %s", rr.Body.String())
 	}
 }
 
-func TestSupermarket_LookupPost_unknownBarcode_usesOFF(t *testing.T) {
+func TestSupermarket_LookupPost_offUnavailable(t *testing.T) {
 	offSrv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Content-Type", "application/json")
-		_, _ = w.Write([]byte(`{
-			"status": 1,
-			"product": {
-				"product_name": "Produto OFF Teste",
-				"categories": "Mercearia"
-			}
-		}`))
+		http.Error(w, "offline", http.StatusServiceUnavailable)
 	}))
 	t.Cleanup(offSrv.Close)
 
@@ -57,6 +43,7 @@ func TestSupermarket_LookupPost_unknownBarcode_usesOFF(t *testing.T) {
 	h := NewSupermarketHandler(setupTestRenderer(t), s, testSite(), cais.Config{Env: "development"})
 	h.barcode = &barcode.Client{BaseURL: offSrv.URL, HTTP: offSrv.Client()}
 
+	// Valid EAN not in local DB
 	form := url.Values{"barcode": {"5901234123457"}}
 	req := httptest.NewRequest(http.MethodPost, "/scan/lookup", strings.NewReader(form.Encode()))
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
@@ -69,14 +56,11 @@ func TestSupermarket_LookupPost_unknownBarcode_usesOFF(t *testing.T) {
 	if rr.Code != http.StatusOK {
 		t.Fatalf("status = %d, want 200", rr.Code)
 	}
-	if !strings.Contains(rr.Body.String(), "Produto OFF Teste") {
-		t.Errorf("body missing OFF product: %s", rr.Body.String())
+	body := rr.Body.String()
+	if !strings.Contains(body, "informe o nome") {
+		t.Errorf("body = %s", body)
 	}
-	_, found, err := s.FindProductByBarcode("5901234123457")
-	if err != nil {
-		t.Fatal(err)
-	}
-	if !found {
-		t.Error("product should be persisted after OFF lookup")
+	if !strings.Contains(body, `name="name"`) {
+		t.Error("should show name form when OFF unavailable")
 	}
 }

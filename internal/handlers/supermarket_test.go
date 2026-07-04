@@ -41,3 +41,36 @@ func TestSupermarketHandler_pagesRender(t *testing.T) {
 		})
 	}
 }
+
+func TestSupermarketHandler_scan_noDemoRapido(t *testing.T) {
+	h := NewSupermarketHandler(setupTestRenderer(t), setupTestStore(t), testSite(), cais.Config{Env: "development"})
+
+	req := httptest.NewRequest(http.MethodGet, "/", nil)
+	req = session.WithUserID(req, 1)
+	rr := httptest.NewRecorder()
+	h.Scan(rr, req)
+
+	if rr.Code != http.StatusOK {
+		t.Fatalf("status = %d", rr.Code)
+	}
+	body := rr.Body.String()
+	if strings.Contains(body, "Demo Rápido") {
+		t.Error("scan page should not contain Demo Rápido section")
+	}
+}
+
+func TestSupermarketHandler_scan_emptyHistory(t *testing.T) {
+	h := NewSupermarketHandler(setupTestRenderer(t), setupTestStore(t), testSite(), cais.Config{Env: "development"})
+
+	req := httptest.NewRequest(http.MethodGet, "/", nil)
+	req = session.WithUserID(req, 99)
+	rr := httptest.NewRecorder()
+	h.Scan(rr, req)
+
+	if rr.Code != http.StatusOK {
+		t.Fatalf("status = %d", rr.Code)
+	}
+	if !strings.Contains(rr.Body.String(), "Nenhum preço registrado ainda") {
+		t.Error("scan page should show empty history message for user without reports")
+	}
+}

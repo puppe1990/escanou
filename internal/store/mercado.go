@@ -15,6 +15,7 @@ const (
 	pointsPerConfirm  = 2
 	verifiedThreshold = 3
 	staleAfter        = 7 * 24 * time.Hour
+	defaultCity       = "São Paulo"
 )
 
 var ErrAlreadyConfirmed = errors.New("already confirmed")
@@ -50,8 +51,8 @@ func (s *SQLiteStore) GetOrCreateProfile(userID int64) (models.UserProfile, erro
 		return models.UserProfile{}, fmt.Errorf("get profile: %w", err)
 	}
 	_, err = s.db.Exec(
-		`INSERT INTO user_profiles (user_id, display_name, points, city) VALUES (?, ?, 0, 'Curitiba')`,
-		userID, fmt.Sprintf("Usuário %d", userID),
+		`INSERT INTO user_profiles (user_id, display_name, points, city) VALUES (?, ?, 0, ?)`,
+		userID, fmt.Sprintf("Usuário %d", userID), defaultCity,
 	)
 	if err != nil {
 		return models.UserProfile{}, fmt.Errorf("create profile: %w", err)

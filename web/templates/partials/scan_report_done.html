@@ -1,0 +1,25 @@
+{{- define "scan_report_done" -}}
+<div id="scan-history" hx-swap-oob="innerHTML">
+  {{ if .Scans }}
+  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2.5">
+    {{ range .Scans }}
+    <div class="p-2.5 bg-slate-50 rounded-lg border border-slate-200 flex flex-col justify-between">
+      <div>
+        <span class="font-extrabold text-slate-800 text-xs truncate block">{{ .ProductName }}</span>
+        <p class="text-[10px] text-slate-500 mt-0.5">{{ .SupermarketName }}</p>
+      </div>
+      <div class="flex items-center justify-between mt-2.5 pt-2 border-t border-slate-200/50">
+        <span class="text-[10px] text-slate-400 font-mono">{{ .TimeAgo }}</span>
+        <span class="text-xs font-black text-slate-900 font-mono">{{ .Price }}</span>
+      </div>
+    </div>
+    {{ end }}
+  </div>
+  {{ else }}
+  <p class="text-xs text-slate-500 font-medium py-4 text-center">
+    Nenhum preço registrado ainda. Escaneie um produto acima.
+  </p>
+  {{ end }}
+</div>
+<div id="scan-result" hx-swap-oob="innerHTML"></div>
+{{- end -}}

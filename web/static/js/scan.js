@@ -76,7 +76,7 @@
     const el = document.getElementById(SCANNER_ID);
     const btn = document.getElementById(START_BTN_ID);
     if (!el || !btn || typeof Html5Qrcode === "undefined") {
-      setStatus("Scanner indisponível — use a busca manual ou Demo Rápido");
+      setStatus("Scanner indisponível — use a busca manual abaixo");
       return;
     }
 
@@ -98,7 +98,7 @@
       const config = { fps: 10, qrbox: { width: 250, height: 120 }, aspectRatio: 1.5 };
       const cameras = await Html5Qrcode.getCameras();
       if (!cameras.length) {
-        setStatus("Nenhuma câmera encontrada — use Demo Rápido à direita");
+        setStatus("Nenhuma câmera encontrada — use a busca manual");
         return;
       }
 
@@ -133,9 +133,9 @@
       if (name === "NotAllowedError" || name === "PermissionDeniedError") {
         setStatus("Câmera bloqueada — clique no ícone de cadeado na barra de endereço e permita");
       } else if (name === "NotFoundError") {
-        setStatus("Nenhuma câmera encontrada — use Demo Rápido à direita");
+        setStatus("Nenhuma câmera encontrada — use a busca manual");
       } else {
-        setStatus((err && err.message) || "Erro ao abrir câmera — use Demo Rápido");
+        setStatus((err && err.message) || "Erro ao abrir câmera — use a busca manual");
       }
       console.warn("cais scan:", err);
     } finally {

@@ -21,13 +21,15 @@ import (
 
 type SupermarketPageData struct {
 	meta.Site
-	Scans           []PriceScanView
-	Markets         []MarketView
-	Products        []ProductView
+	Scans   []PriceScanView
+	Markets []MarketView
+
 	Badges          []BadgeView
 	Leaders         []LeaderView
 	LookupProduct   *ProductView
 	LookupError     string
+	LookupBarcode   string
+	LookupNeedsName bool
 	ReportProductID int64
 	SupermarketOpts []SupermarketOption
 	SubmissionCount int
@@ -134,7 +136,6 @@ func (h *SupermarketHandler) Scan(w http.ResponseWriter, r *http.Request) {
 	}
 	data := h.base(r)
 	data.ActiveNav = "scan"
-	data.Products = h.listProductViews(r)
 	data.SupermarketOpts = h.supermarketOptions()
 	if uid, ok := session.UserID(r); ok {
 		data.Scans = h.userScans(uid)
@@ -193,7 +194,7 @@ func (h *SupermarketHandler) LookupPost(w http.ResponseWriter, r *http.Request) 
 	}
 	data := h.base(r)
 	data.ActiveNav = "scan"
-	ean := strings.TrimSpace(r.FormValue("barcode"))
+	ean := normalizeBarcode(r.FormValue("barcode"))
 	name := strings.TrimSpace(r.FormValue("name"))
 	if ean == "" {
 		data.LookupError = "Informe o código de barras"
@@ -206,8 +207,15 @@ func (h *SupermarketHandler) LookupPost(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 	if !found {
+		if !validBarcode(ean) {
+			data.LookupError = "Código inválido — confira os dígitos"
+			data.LookupBarcode = ean
+			h.renderLookupInvalid(w, r, data)
+			return
+		}
 		if name == "" {
-			if off, ok, err := h.barcode.Lookup(r.Context(), ean); err == nil && ok {
+			off, ok, err := h.barcode.Lookup(r.Context(), ean)
+			if err == nil && ok {
 				name = off.Name
 				category := off.Category
 				id, err := h.store.CreateProduct(name, ean, category)
@@ -222,6 +230,8 @@ func (h *SupermarketHandler) LookupPost(w http.ResponseWriter, r *http.Request) 
 		if !found {
 			if name == "" {
 				data.LookupError = "Produto não encontrado — informe o nome para cadastrar"
+				data.LookupBarcode = ean
+				data.LookupNeedsName = true
 				h.renderLookup(w, r, data)
 				return
 			}
@@ -249,6 +259,19 @@ func (h *SupermarketHandler) renderLookup(w http.ResponseWriter, r *http.Request
 	}, h.cfg)
 }
 
+func (h *SupermarketHandler) renderLookupInvalid(w http.ResponseWriter, r *http.Request, data SupermarketPageData) {
+	opts := httpx.RenderOptions{
+		Layout:  "base",
+		Page:    "scan",
+		Partial: "scan_result",
+		Data:    data,
+	}
+	if cais.IsHTMX(r) {
+		opts.Status = http.StatusUnprocessableEntity
+	}
+	httpx.RenderPageOrPartial(w, r, h.renderer, opts, h.cfg)
+}
+
 func (h *SupermarketHandler) ReportPost(w http.ResponseWriter, r *http.Request) {
 	if !h.requireAuth(w, r) {
 		return
@@ -257,12 +280,19 @@ func (h *SupermarketHandler) ReportPost(w http.ResponseWriter, r *http.Request) 
 	productID, _ := strconv.ParseInt(r.FormValue("product_id"), 10, 64)
 	supermarketID, _ := strconv.ParseInt(r.FormValue("supermarket_id"), 10, 64)
 	priceCents, err := parsePriceCents(r.FormValue("price"))
-	if err != nil || productID == 0 || supermarketID == 0 {
+	if err != nil || productID == 0 || supermarketID == 0 || priceCents <= 0 || priceCents > 999_900 {
 		data := h.base(r)
 		data.ActiveNav = "scan"
 		data.LookupError = "Preencha supermercado e preço válidos"
-		data.Products = h.listProductViews(r)
 		data.SupermarketOpts = h.supermarketOptions()
+		if cais.IsHTMX(r) {
+			httpx.RenderPageOrPartial(w, r, h.renderer, httpx.RenderOptions{
+				Partial: "scan_result",
+				Data:    data,
+				Status:  http.StatusUnprocessableEntity,
+			}, h.cfg)
+			return
+		}
 		httpx.RenderOrError(w, h.renderer, "base", "scan", data, h.cfg)
 		return
 	}
@@ -271,6 +301,16 @@ func (h *SupermarketHandler) ReportPost(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 	cais.SetToast(w, "+10 pts — preço registrado!")
+	if cais.IsHTMX(r) {
+		data := h.base(r)
+		data.ActiveNav = "scan"
+		data.Scans = h.userScans(userID)
+		httpx.RenderPageOrPartial(w, r, h.renderer, httpx.RenderOptions{
+			Partial: "scan_report_done",
+			Data:    data,
+		}, h.cfg)
+		return
+	}
 	httpx.SeeOther(w, r, "/feed")
 }
 
@@ -347,18 +387,6 @@ func priceReportsToViews(reports []models.PriceReport) []PriceScanView {
 			Outdated:        store.ReportOutdated(r.CreatedAt),
 			Flagged:         r.Flagged,
 		})
-	}
-	return out
-}
-
-func (h *SupermarketHandler) listProductViews(_ *http.Request) []ProductView {
-	products, err := h.store.ListProducts(10)
-	if err != nil {
-		return nil
-	}
-	out := make([]ProductView, 0, len(products))
-	for _, p := range products {
-		out = append(out, h.productView(p))
 	}
 	return out
 }
@@ -459,7 +487,11 @@ func parsePriceCents(raw string) (int, error) {
 		}
 		frac, _ = strconv.Atoi(p)
 	}
-	return reais*100 + frac, nil
+	cents := reais*100 + frac
+	if cents <= 0 {
+		return 0, fmt.Errorf("price must be positive")
+	}
+	return cents, nil
 }
 
 func timeAgo(t time.Time) string {
