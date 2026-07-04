@@ -16,8 +16,10 @@ var belenzinhoTatuapeMarkets = []string{
 	"Extra Belenzinho",
 	"Assaí Belém",
 	"Dia Belenzinho",
+	"Atacadão Belenzinho",
 	"Extra Tatuapé",
 	"Assaí Tatuapé",
+	"Atacadão Tatuapé",
 }
 
 const (

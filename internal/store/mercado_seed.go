@@ -43,8 +43,10 @@ func seedMercadoCatalog(db *sql.DB) error {
 		{"Extra Belenzinho", "R. Oriente, 234 — Belenzinho", -23.5398, -46.5865},
 		{"Assaí Belém", "Av. Alcântara Machado, 664 — Belém", -23.5368, -46.5832},
 		{"Dia Belenzinho", "R. José Belenzinho, 289 — Belenzinho", -23.5442, -46.5948},
+		{"Atacadão Belenzinho", "Av. do Estado, 5533 — Brás", -23.5342, -46.5778},
 		{"Extra Tatuapé", "R. Serra de Bragança, 1555 — Tatuapé", -23.5492, -46.5418},
 		{"Assaí Tatuapé", "R. Maria Cândida, 1899 — Tatuapé", -23.5496, -46.5392},
+		{"Atacadão Tatuapé", "R. Maria Cândida, 1763 — Tatuapé", -23.5488, -46.5378},
 	}
 	for _, m := range markets {
 		if _, err := db.Exec(`
